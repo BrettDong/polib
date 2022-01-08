@@ -1,0 +1,12 @@
+[package]
+name = "polib"
+version = "0.0.1"
+edition = "2021"
+description = "Read translation data in GNU gettext PO format."
+authors = [ "Brett Dong <brett.browning.dong@gmail.com>" ]
+license = "MIT"
+repository = "https://github.com/brettdong/polib"
+keywords = [ "gettext" ]
+
+[dev-dependencies]
+microbench = "0.5.0"

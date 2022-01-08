@@ -1,0 +1,27 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: package version\n"
+"POT-Creation-Date: 2022-01-08 03:18+0000\n"
+"PO-Revision-Date: 2018-04-26 14:47+0000\n"
+"Last-Translator: John Smith\n"
+"Language-Team: Chinese (China)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. ~ This is a translation comment
+#: src/foo.c
+msgid "Hello"
+msgstr "Translated_Hello"
+
+#. ~ This is a translation comment
+#: src/bar.c
+msgid "Book"
+msgid_plural "Books"
+msgstr[0] "Translated_Book"
+
+#: src/bar.c
+msgid "Good"
+msgstr ""
