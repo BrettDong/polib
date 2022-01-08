@@ -32,7 +32,7 @@ impl Message {
         msgctxt: &str,
         msgid: &str,
         msgid_plural: &str,
-        msgstr_plural: &Vec<String>,
+        msgstr_plural: &[String],
     ) -> Self {
         Message {
             comments: comments.to_string(),
@@ -67,7 +67,7 @@ impl Message {
 
     pub fn get_msgctxt(&self) -> Option<&String> {
         match &self.msgctxt {
-            Some(ctxt) => Some(&ctxt),
+            Some(ctxt) => Some(ctxt),
             None => None,
         }
     }

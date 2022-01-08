@@ -83,7 +83,7 @@ impl POParserState {
 impl POFile {
     pub fn parse(path: &Path) -> Result<Self, Box<dyn Error>> {
         let file = std::fs::File::open(path)?;
-        let num_plural_forms = find_num_plurals(&path)?;
+        let num_plural_forms = find_num_plurals(path)?;
         let mut messages: Vec<Message> = Vec::new();
         let mut state = POParserState::new(num_plural_forms);
         let mut idle_buf = String::new();
@@ -115,37 +115,37 @@ impl POFile {
                 cur_str_buf = &mut state.cur_msgctxt;
                 append_str(
                     cur_str_buf,
-                    &line.trim_start_matches("msgctxt ").trim_matches('"'),
+                    line.trim_start_matches("msgctxt ").trim_matches('"'),
                 );
                 state.dirty = true;
             } else if line.starts_with("msgid ") {
                 cur_str_buf = &mut state.cur_msgid;
                 append_str(
                     cur_str_buf,
-                    &line.trim_start_matches("msgid ").trim_matches('"'),
+                    line.trim_start_matches("msgid ").trim_matches('"'),
                 );
                 state.dirty = true;
             } else if line.starts_with("msgid_plural ") {
                 cur_str_buf = &mut state.cur_msgid_plural;
                 append_str(
                     cur_str_buf,
-                    &line.trim_start_matches("msgid_plural ").trim_matches('"'),
+                    line.trim_start_matches("msgid_plural ").trim_matches('"'),
                 );
                 state.dirty = true;
             } else if line.starts_with("msgstr ") {
                 cur_str_buf = &mut state.cur_msgstr;
                 append_str(
                     cur_str_buf,
-                    &line.trim_start_matches("msgstr ").trim_matches('"'),
+                    line.trim_start_matches("msgstr ").trim_matches('"'),
                 );
                 state.dirty = true;
             } else if line.starts_with("msgstr[") {
                 let index = line.chars().nth(7).unwrap().to_digit(10).unwrap() as usize;
                 cur_str_buf = &mut state.cur_msgstr_plural[index];
-                append_str(cur_str_buf, &line.as_str()[10..].trim_matches('"'));
+                append_str(cur_str_buf, line.as_str()[10..].trim_matches('"'));
                 state.dirty = true;
-            } else if line.starts_with("\"") {
-                append_str(cur_str_buf, &line.trim_matches('"'));
+            } else if line.starts_with('"') {
+                append_str(cur_str_buf, line.trim_matches('"'));
                 state.dirty = true;
             }
         }
@@ -157,10 +157,10 @@ impl POFile {
         }
 
         Ok(POFile {
-            num_plural_forms: num_plural_forms,
+            num_plural_forms,
             plural_eval: |_| 0,
-            messages: messages,
-            map: map,
+            messages,
+            map,
         })
     }
 }
