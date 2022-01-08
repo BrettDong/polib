@@ -108,6 +108,13 @@ impl POFile {
                 cur_str_buf = &mut state.cur_flags;
                 append_new_line_str(cur_str_buf, &line.as_str()[3..]);
                 state.dirty = true;
+            } else if line.starts_with("msgctxt ") {
+                cur_str_buf = &mut state.cur_msgctxt;
+                append_str(
+                    cur_str_buf,
+                    &line.trim_start_matches("msgctxt ").trim_matches('"'),
+                );
+                state.dirty = true;
             } else if line.starts_with("msgid ") {
                 cur_str_buf = &mut state.cur_msgid;
                 append_str(
