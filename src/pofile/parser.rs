@@ -88,13 +88,16 @@ impl POFile {
         let mut state = POParserState::new(num_plural_forms);
         let mut idle_buf = String::new();
         let mut cur_str_buf = &mut state.cur_msgid;
+        let mut map = HashMap::new();
 
         for line in BufReader::new(file).lines() {
             let line = line?;
             if line.is_empty() {
                 cur_str_buf = &mut idle_buf;
                 if state.dirty {
-                    messages.push(state.save_current_message());
+                    let message = state.save_current_message();
+                    map.insert(message.internal_key(), messages.len());
+                    messages.push(message);
                 }
             } else if line.starts_with("#.") {
                 cur_str_buf = &mut state.cur_comments;
@@ -148,13 +151,16 @@ impl POFile {
         }
 
         if state.dirty {
-            messages.push(state.save_current_message());
+            let message = state.save_current_message();
+            map.insert(message.internal_key(), messages.len());
+            messages.push(message);
         }
 
         Ok(POFile {
             num_plural_forms: num_plural_forms,
             plural_eval: |_| 0,
             messages: messages,
+            map: map,
         })
     }
 }
