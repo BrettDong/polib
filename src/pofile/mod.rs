@@ -1,4 +1,5 @@
 pub mod parser;
+pub mod message;
 
 pub struct SingularMessage {
     pub msgid: String,
