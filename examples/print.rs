@@ -16,13 +16,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         if message.is_plural() {
             println!(
                 "{} => {}",
-                message.get_msgid(),
+                message.get_msgid().unwrap(),
                 message.get_msgstr_plural().unwrap()[0]
             );
         } else {
             println!(
                 "{} => {}",
-                message.get_msgid(),
+                message.get_msgid().unwrap(),
                 message.get_msgstr().unwrap()
             );
         }

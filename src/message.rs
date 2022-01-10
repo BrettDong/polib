@@ -22,7 +22,7 @@ pub struct Message {
     pub comments: String,
     pub source: String,
     pub flags: String,
-    pub msgctxt: Option<String>,
+    pub msgctxt: String,
     pub body: MessageBody,
 }
 
@@ -42,11 +42,7 @@ impl Message {
             comments: comments.to_string(),
             source: source.to_string(),
             flags: flags.to_string(),
-            msgctxt: if msgctxt.is_empty() {
-                None
-            } else {
-                Some(msgctxt.to_string())
-            },
+            msgctxt: msgctxt.to_string(),
             body: MessageBody::Singular(SingularMessage {
                 msgid: msgid.to_string(),
                 msgstr: msgstr.to_string(),
@@ -67,11 +63,7 @@ impl Message {
             comments: comments.to_string(),
             source: source.to_string(),
             flags: flags.to_string(),
-            msgctxt: if msgctxt.is_empty() {
-                None
-            } else {
-                Some(msgctxt.to_string())
-            },
+            msgctxt: msgctxt.to_string(),
             body: MessageBody::Plural(PluralMessage {
                 msgid: msgid.to_string(),
                 msgid_plural: msgid_plural.to_string(),
@@ -81,10 +73,14 @@ impl Message {
     }
 
     pub fn internal_key(&self) -> String {
-        gen_internal_key(
-            self.get_msgctxt().unwrap_or(&String::new()),
-            self.get_msgid(),
-        )
+        gen_internal_key(self.get_msgctxt().unwrap(), self.get_msgid().unwrap())
+    }
+
+    pub fn is_singular(&self) -> bool {
+        match &self.body {
+            MessageBody::Singular(_) => true,
+            MessageBody::Plural(_) => false,
+        }
     }
 
     pub fn is_plural(&self) -> bool {
@@ -94,17 +90,21 @@ impl Message {
         }
     }
 
-    pub fn get_msgctxt(&self) -> Option<&String> {
-        match &self.msgctxt {
-            Some(ctxt) => Some(ctxt),
-            None => None,
+    pub fn get_msgctxt(&self) -> Result<&String, ()> {
+        Ok(&self.msgctxt)
+    }
+
+    pub fn get_msgid(&self) -> Result<&String, ()> {
+        match &self.body {
+            MessageBody::Singular(singular) => Ok(&singular.msgid),
+            MessageBody::Plural(plural) => Ok(&plural.msgid),
         }
     }
 
-    pub fn get_msgid(&self) -> &String {
+    pub fn get_msgid_plural(&self) -> Result<&String, SingularPluralMismatchError> {
         match &self.body {
-            MessageBody::Singular(singular) => &singular.msgid,
-            MessageBody::Plural(plural) => &plural.msgid,
+            MessageBody::Singular(_) => Err(SingularPluralMismatchError),
+            MessageBody::Plural(plural) => Ok(&plural.msgid_plural),
         }
     }
 
