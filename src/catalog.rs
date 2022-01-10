@@ -1,8 +1,15 @@
-use crate::pofile::*;
+use crate::message::*;
+use std::collections::HashMap;
 
-use super::message::gen_internal_key;
+#[derive(Debug)]
+pub struct Catalog {
+    pub num_plural_forms: usize,
+    pub plural_eval: fn(i64) -> usize,
+    pub messages: Vec<Message>,
+    pub(crate) map: HashMap<String, usize>,
+}
 
-impl POFile {
+impl Catalog {
     pub fn find_message(&self, msgid: &str) -> Option<&Message> {
         match self.map.get(msgid) {
             Some(index) => Some(&self.messages[*index]),

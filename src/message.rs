@@ -1,4 +1,33 @@
-use crate::pofile::*;
+#[derive(Debug)]
+pub struct SingularMessage {
+    pub msgid: String,
+    pub msgstr: String,
+}
+
+#[derive(Debug)]
+pub struct PluralMessage {
+    pub msgid: String,
+    pub msgid_plural: String,
+    pub msgstr_plural: Vec<String>,
+}
+
+#[derive(Debug)]
+pub enum MessageBody {
+    Singular(SingularMessage),
+    Plural(PluralMessage),
+}
+
+#[derive(Debug)]
+pub struct Message {
+    pub comments: String,
+    pub source: String,
+    pub flags: String,
+    pub msgctxt: Option<String>,
+    pub body: MessageBody,
+}
+
+#[derive(Debug)]
+pub struct SingularPluralMismatchError;
 
 impl Message {
     pub fn new_singular(
@@ -18,7 +47,7 @@ impl Message {
             } else {
                 Some(msgctxt.to_string())
             },
-            body: PluralizableMessage::Singular(SingularMessage {
+            body: MessageBody::Singular(SingularMessage {
                 msgid: msgid.to_string(),
                 msgstr: msgstr.to_string(),
             }),
@@ -43,7 +72,7 @@ impl Message {
             } else {
                 Some(msgctxt.to_string())
             },
-            body: PluralizableMessage::Plural(PluralMessage {
+            body: MessageBody::Plural(PluralMessage {
                 msgid: msgid.to_string(),
                 msgid_plural: msgid_plural.to_string(),
                 msgstr_plural: msgstr_plural.to_vec(),
@@ -60,8 +89,8 @@ impl Message {
 
     pub fn is_plural(&self) -> bool {
         match &self.body {
-            PluralizableMessage::Singular(_) => false,
-            PluralizableMessage::Plural(_) => true,
+            MessageBody::Singular(_) => false,
+            MessageBody::Plural(_) => true,
         }
     }
 
@@ -74,22 +103,22 @@ impl Message {
 
     pub fn get_msgid(&self) -> &String {
         match &self.body {
-            PluralizableMessage::Singular(singular) => &singular.msgid,
-            PluralizableMessage::Plural(plural) => &plural.msgid,
+            MessageBody::Singular(singular) => &singular.msgid,
+            MessageBody::Plural(plural) => &plural.msgid,
         }
     }
 
     pub fn get_msgstr(&self) -> Result<&String, SingularPluralMismatchError> {
         match &self.body {
-            PluralizableMessage::Singular(singular) => Ok(&singular.msgstr),
-            PluralizableMessage::Plural(_) => Err(SingularPluralMismatchError),
+            MessageBody::Singular(singular) => Ok(&singular.msgstr),
+            MessageBody::Plural(_) => Err(SingularPluralMismatchError),
         }
     }
 
     pub fn get_msgstr_plural(&self) -> Result<&Vec<String>, SingularPluralMismatchError> {
         match &self.body {
-            PluralizableMessage::Singular(_) => Err(SingularPluralMismatchError),
-            PluralizableMessage::Plural(plural) => Ok(&plural.msgstr_plural),
+            MessageBody::Singular(_) => Err(SingularPluralMismatchError),
+            MessageBody::Plural(plural) => Ok(&plural.msgstr_plural),
         }
     }
 }
@@ -105,14 +134,14 @@ pub fn gen_internal_key(msgctxt: &str, msgid: &str) -> String {
 mod test {
     #[test]
     fn test_internal_key_without_ctxt() {
-        use crate::pofile::Message;
+        use crate::message::Message;
         let message = Message::new_singular("", "", "", "", "ID", "STR");
         assert_eq!("ID", message.internal_key());
     }
 
     #[test]
     fn test_internal_key_with_ctxt() {
-        use crate::pofile::Message;
+        use crate::message::Message;
         let message = Message::new_singular("", "", "", "CTXT", "ID", "STR");
         assert_eq!("CTXT\u{0004}ID", message.internal_key());
     }

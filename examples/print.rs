@@ -1,4 +1,4 @@
-use polib::pofile::*;
+use polib::po_file;
 use std::env;
 use std::error::Error;
 use std::path::Path;
@@ -11,15 +11,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    let po_file = POFile::parse(Path::new(&path))?;
-    for message in po_file.messages {
-        match message.body {
-            PluralizableMessage::Singular(singular) => {
-                println!("{} => {}", &singular.msgid, &singular.msgstr);
-            }
-            PluralizableMessage::Plural(plural) => {
-                println!("{} => {}", &plural.msgid, &plural.msgstr_plural[0]);
-            }
+    let catalog = po_file::parse(Path::new(&path))?;
+    for message in catalog.messages {
+        if message.is_plural() {
+            println!(
+                "{} => {}",
+                message.get_msgid(),
+                message.get_msgstr_plural().unwrap()[0]
+            );
+        } else {
+            println!(
+                "{} => {}",
+                message.get_msgid(),
+                message.get_msgstr().unwrap()
+            );
         }
     }
     Ok(())

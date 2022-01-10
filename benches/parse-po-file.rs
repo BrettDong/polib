@@ -2,7 +2,7 @@
 
 extern crate test;
 
-use polib::pofile::POFile;
+use polib::po_file;
 use std::path::Path;
 use test::Bencher;
 
@@ -11,7 +11,7 @@ fn parse_po_file(bench: &mut Bencher) {
     let path = Path::new("./tests/sample.po");
     bench.iter(|| {
         let path = Path::new(&path);
-        let messages = POFile::parse(path).unwrap().messages;
+        let messages = po_file::parse(path).unwrap().messages;
         messages.len()
     });
 }
