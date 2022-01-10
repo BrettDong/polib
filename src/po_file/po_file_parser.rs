@@ -1,3 +1,4 @@
+use super::escape::unescape;
 use crate::catalog::Catalog;
 use crate::message::*;
 use std::collections::HashMap;
@@ -60,20 +61,25 @@ impl POParserState {
                 &self.cur_comments,
                 &self.cur_source,
                 &self.cur_flags,
-                &self.cur_msgctxt,
-                &self.cur_msgid,
-                &self.cur_msgstr,
+                unescape(&self.cur_msgctxt).unwrap().as_str(),
+                unescape(&self.cur_msgid).unwrap().as_str(),
+                unescape(&self.cur_msgstr).unwrap().as_str(),
             );
             self.reset_singular();
         } else {
+            let escaped_plural_translations = self
+                .cur_msgstr_plural
+                .iter()
+                .map(|s| unescape(&s).unwrap())
+                .collect();
             result = Message::new_plural(
                 &self.cur_comments,
                 &self.cur_source,
                 &self.cur_flags,
-                &self.cur_msgctxt,
-                &self.cur_msgid,
-                &self.cur_msgid_plural,
-                &self.cur_msgstr_plural,
+                unescape(&self.cur_msgctxt).unwrap().as_str(),
+                unescape(&self.cur_msgid).unwrap().as_str(),
+                unescape(&self.cur_msgid_plural).unwrap().as_str(),
+                escaped_plural_translations,
             );
             self.reset_plural();
         }

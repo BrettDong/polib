@@ -57,7 +57,7 @@ impl Message {
         msgctxt: &str,
         msgid: &str,
         msgid_plural: &str,
-        msgstr_plural: &[String],
+        msgstr_plural: Vec<String>,
     ) -> Self {
         Message {
             comments: comments.to_string(),

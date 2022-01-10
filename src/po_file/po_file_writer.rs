@@ -1,3 +1,4 @@
+use super::escape::escape;
 use crate::catalog::Catalog;
 use std::fs::OpenOptions;
 use std::io::{BufWriter, Write};
@@ -26,19 +27,29 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
             writer.write(format!("#, {}\n", message.flags).as_bytes())?;
         }
         if !message.msgctxt.is_empty() {
-            writer.write(format!("msgctxt \"{}\"\n", message.msgctxt).as_bytes())?;
+            writer.write(format!("msgctxt \"{}\"\n", escape(&message.msgctxt)).as_bytes())?;
         }
         if message.is_singular() {
-            writer.write(format!("msgid \"{}\"\n", message.get_msgid().unwrap()).as_bytes())?;
-            writer.write(format!("msgstr \"{}\"\n", message.get_msgstr().unwrap()).as_bytes())?;
-        } else {
-            writer.write(format!("msgid \"{}\"\n", message.get_msgid().unwrap()).as_bytes())?;
             writer.write(
-                format!("msgid_plural \"{}\"\n", message.get_msgid_plural().unwrap()).as_bytes(),
+                format!("msgid \"{}\"\n", escape(message.get_msgid().unwrap())).as_bytes(),
+            )?;
+            writer.write(
+                format!("msgstr \"{}\"\n", escape(message.get_msgstr().unwrap())).as_bytes(),
+            )?;
+        } else {
+            writer.write(
+                format!("msgid \"{}\"\n", escape(message.get_msgid().unwrap())).as_bytes(),
+            )?;
+            writer.write(
+                format!(
+                    "msgid_plural \"{}\"\n",
+                    escape(message.get_msgid_plural().unwrap())
+                )
+                .as_bytes(),
             )?;
             let plurals = message.get_msgstr_plural().unwrap();
             for i in 0..plurals.len() {
-                writer.write(format!("msgstr[{}] \"{}\"\n", i, plurals[i]).as_bytes())?;
+                writer.write(format!("msgstr[{}] \"{}\"\n", i, escape(&plurals[i])).as_bytes())?;
             }
         }
         writer.write(b"\n")?;
