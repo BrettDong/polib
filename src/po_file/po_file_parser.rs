@@ -147,39 +147,32 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
             state.dirty = true;
         } else if line.starts_with("msgctxt ") {
             cur_str_buf = &mut state.cur_msgctxt;
-            append_str(
-                cur_str_buf,
-                line.trim_start_matches("msgctxt ").trim_matches('"'),
-            );
+            let trimmed = line.trim_start_matches("msgctxt ");
+            append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgid ") {
             cur_str_buf = &mut state.cur_msgid;
-            append_str(
-                cur_str_buf,
-                line.trim_start_matches("msgid ").trim_matches('"'),
-            );
+            let trimmed = line.trim_start_matches("msgid ");
+            append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgid_plural ") {
             cur_str_buf = &mut state.cur_msgid_plural;
-            append_str(
-                cur_str_buf,
-                line.trim_start_matches("msgid_plural ").trim_matches('"'),
-            );
+            let trimmed = line.trim_start_matches("msgid_plural ");
+            append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgstr ") {
             cur_str_buf = &mut state.cur_msgstr;
-            append_str(
-                cur_str_buf,
-                line.trim_start_matches("msgstr ").trim_matches('"'),
-            );
+            let trimmed = line.trim_start_matches("msgstr ");
+            append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgstr[") {
             let index = line.chars().nth(7).unwrap().to_digit(10).unwrap() as usize;
             cur_str_buf = &mut state.cur_msgstr_plural[index];
-            append_str(cur_str_buf, line.as_str()[10..].trim_matches('"'));
+            let trimmed = &line.as_str()[10..];
+            append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with('"') {
-            append_str(cur_str_buf, line.trim_matches('"'));
+            append_str(cur_str_buf, &line[1..line.len() - 1]);
             state.dirty = true;
         }
     }
