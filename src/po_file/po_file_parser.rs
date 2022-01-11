@@ -153,22 +153,26 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
             state.dirty = true;
         } else if line.starts_with("msgctxt ") {
             cur_str_buf = &mut state.cur_msgctxt;
-            let trimmed = line.trim_start_matches("msgctxt ");
+            let prefix_len = "msgctxt ".len();
+            let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgid ") {
             cur_str_buf = &mut state.cur_msgid;
-            let trimmed = line.trim_start_matches("msgid ");
+            let prefix_len = "msgid ".len();
+            let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgid_plural ") {
             cur_str_buf = &mut state.cur_msgid_plural;
-            let trimmed = line.trim_start_matches("msgid_plural ");
+            let prefix_len = "msgid_plural ".len();
+            let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgstr ") {
             cur_str_buf = &mut state.cur_msgstr;
-            let trimmed = line.trim_start_matches("msgstr ");
+            let prefix_len = "msgstr ".len();
+            let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with("msgstr[") {
