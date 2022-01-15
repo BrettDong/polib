@@ -7,3 +7,4 @@ authors = [ "Brett Dong <brett.browning.dong@gmail.com>" ]
 license = "MIT"
 repository = "https://github.com/brettdong/polib"
 keywords = [ "gettext" ]
+readme = "README.md"
