@@ -77,7 +77,10 @@ fn write_field(
     if content.match_indices('\n').count() <= 1
         && field_name.len() + display_width(escaped_content.as_str()) <= 78
     {
-        writer.write_all(format!("{} \"{}\"\n", field_name, escaped_content).as_bytes())?;
+        writer.write_all(field_name.as_bytes())?;
+        writer.write_all(b" \"")?;
+        writer.write_all(escaped_content.as_bytes())?;
+        writer.write_all(b"\"\n")?;
     } else {
         writer.write_all(field_name.as_bytes())?;
         writer.write_all(b" \"\"\n")?;
@@ -105,16 +108,22 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
     for message in &catalog.messages {
         if !message.comments.is_empty() {
             for line in message.comments.split('\n') {
-                writer.write_all(format!("#. {}\n", line).as_bytes())?;
+                writer.write_all(b"#. ")?;
+                writer.write_all(line.as_bytes())?;
+                writer.write_all(b"\n")?;
             }
         }
         if !message.source.is_empty() {
             for line in message.source.split('\n') {
-                writer.write_all(format!("#: {}\n", line).as_bytes())?;
+                writer.write_all(b"#: ")?;
+                writer.write_all(line.as_bytes())?;
+                writer.write_all(b"\n")?;
             }
         }
         if !message.flags.is_empty() {
-            writer.write_all(format!("#, {}\n", message.flags).as_bytes())?;
+            writer.write_all(b"#, ")?;
+            writer.write_all(message.flags.as_bytes())?;
+            writer.write_all(b"\n")?;
         }
         if !message.msgctxt.is_empty() {
             write_field(&mut writer, "msgctxt", &message.msgctxt)?;
