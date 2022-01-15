@@ -8,3 +8,7 @@ A rust library to load, read, manipulate and write GNU gettext translation data 
 ## Example
 
 See [examples](/examples) folder for example code.
+
+## Documentation
+
+Refer to [docs.rs](https://docs.rs/polib).
