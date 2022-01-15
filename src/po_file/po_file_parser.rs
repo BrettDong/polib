@@ -70,7 +70,7 @@ impl POParserState {
             let escaped_plural_translations = self
                 .cur_msgstr_plural
                 .iter()
-                .map(|s| unescape(&s).unwrap())
+                .map(|s| unescape(s).unwrap())
                 .collect();
             result = Message::new_plural(
                 &self.cur_comments,
