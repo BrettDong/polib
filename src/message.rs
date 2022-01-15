@@ -90,11 +90,11 @@ impl Message {
         }
     }
 
-    pub fn get_msgctxt(&self) -> Result<&String, ()> {
+    pub fn get_msgctxt(&self) -> Result<&String, SingularPluralMismatchError> {
         Ok(&self.msgctxt)
     }
 
-    pub fn get_msgid(&self) -> Result<&String, ()> {
+    pub fn get_msgid(&self) -> Result<&String, SingularPluralMismatchError> {
         match &self.body {
             MessageBody::Singular(singular) => Ok(&singular.msgid),
             MessageBody::Plural(plural) => Ok(&plural.msgid),

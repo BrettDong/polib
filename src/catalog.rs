@@ -20,6 +20,12 @@ impl fmt::Display for InvalidCatalogError {
 
 impl Error for InvalidCatalogError {}
 
+impl Default for Catalog {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Catalog {
     pub fn new() -> Self {
         Catalog {

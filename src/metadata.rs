@@ -56,6 +56,12 @@ impl CatalogPluralRules {
     }
 }
 
+impl Default for CatalogMetadata {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CatalogMetadata {
     pub fn new() -> Self {
         CatalogMetadata {
