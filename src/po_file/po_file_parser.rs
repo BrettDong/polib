@@ -34,6 +34,7 @@ impl POParserState {
     }
 
     fn set_nplurals(&mut self, nplurals: usize) {
+        self.cur_msgstr_plural.clear();
         self.cur_msgstr_plural.shrink_to(nplurals);
     }
 
