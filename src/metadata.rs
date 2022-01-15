@@ -50,6 +50,10 @@ impl CatalogPluralRules {
             Ok(CatalogPluralRules { nplurals, expr })
         }
     }
+
+    pub fn dump(&self) -> String {
+        format!("nplurals={}; plural={};", self.nplurals, self.expr)
+    }
 }
 
 impl CatalogMetadata {
@@ -94,5 +98,26 @@ impl CatalogMetadata {
             plural_rules: CatalogPluralRules::parse(key_values.get("Plural-Forms").unwrap())
                 .unwrap(),
         }
+    }
+
+    pub fn dump(&self) -> String {
+        let mut buffer = String::new();
+        buffer.push_str(format!("Project-Id-Version: {}\n", self.project_id_version).as_str());
+        buffer.push_str(format!("POT-Creation-Date: {}\n", self.pot_creation_date).as_str());
+        buffer.push_str(format!("PO-Revision-Date: {}\n", self.po_revision_date).as_str());
+        buffer.push_str(format!("Last-Translator: {}\n", self.last_translator).as_str());
+        buffer.push_str(format!("Language-Team: {}\n", self.language_team).as_str());
+        buffer.push_str(format!("MIME-Version: {}\n", self.mime_version).as_str());
+        buffer.push_str(format!("Content-Type: {}\n", self.content_type).as_str());
+        buffer.push_str(
+            format!(
+                "Content-Transfer-Encoding: {}\n",
+                self.content_transfer_encoding
+            )
+            .as_str(),
+        );
+        buffer.push_str(format!("Language: {}\n", self.language).as_str());
+        buffer.push_str(format!("Plural-Forms: {}\n", self.plural_rules.dump()).as_str());
+        buffer
     }
 }

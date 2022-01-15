@@ -105,6 +105,9 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
         .append(false)
         .open(path)?;
     let mut writer = BufWriter::new(file);
+    writer.write_all(b"\nmsgid \"\"\n")?;
+    write_field(&mut writer, "msgstr", catalog.metadata.dump().as_str())?;
+    writer.write_all(b"\n")?;
     for message in &catalog.messages {
         if !message.comments.is_empty() {
             for line in message.comments.split('\n') {

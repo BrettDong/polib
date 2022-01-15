@@ -37,3 +37,7 @@ jobs:
         run: cargo build
       - name: Test
         run: cargo test
+      - name: Benchmark
+        run: |
+          cargo bench parse_po_file
+          cargo bench write_po_file

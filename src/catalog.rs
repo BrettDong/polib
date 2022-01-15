@@ -51,6 +51,14 @@ impl Catalog {
         Ok(())
     }
 
+    pub fn add_message(&mut self, message: Message) {
+        self.messages.push(message);
+        self.map.insert(
+            self.messages.last().unwrap().internal_key(),
+            self.messages.len() - 1,
+        );
+    }
+
     pub fn find_message(&self, msgid: &str) -> Option<&Message> {
         match self.find_message_index(msgid) {
             Some(index) => Some(&self.messages[*index]),

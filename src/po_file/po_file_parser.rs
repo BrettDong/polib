@@ -2,7 +2,6 @@ use super::escape::unescape;
 use crate::catalog::{Catalog, InvalidCatalogError};
 use crate::message::*;
 use crate::metadata::CatalogMetadata;
-use std::collections::HashMap;
 use std::error::Error;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
@@ -105,12 +104,11 @@ fn append_new_line_str(buf: &mut String, content: &str) {
 
 pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
     let file = std::fs::File::open(path)?;
-    let mut metadata: Option<CatalogMetadata> = None;
-    let mut messages: Vec<Message> = Vec::new();
+    let mut metadata_parsed = false;
     let mut state = POParserState::new();
     let mut idle_buf = String::new();
     let mut cur_str_buf = &mut state.cur_msgid;
-    let mut map = HashMap::new();
+    let mut catalog = Catalog::new();
 
     for line in BufReader::new(file).lines() {
         let line = line?;
@@ -118,20 +116,21 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
             cur_str_buf = &mut idle_buf;
             if state.dirty {
                 let message = state.save_current_message();
-                if metadata.is_none() {
+                if !metadata_parsed {
                     if message.get_msgid().unwrap().is_empty()
                         && !message.get_msgstr().unwrap().is_empty()
                     {
-                        metadata = Some(CatalogMetadata::parse(message.get_msgstr().unwrap()));
-                        state.set_nplurals(metadata.as_ref().unwrap().plural_rules.nplurals);
+                        catalog.metadata = CatalogMetadata::parse(message.get_msgstr().unwrap());
+                        state.set_nplurals(catalog.metadata.plural_rules.nplurals);
+                        metadata_parsed = true;
                     } else {
                         return Err(Box::new(InvalidCatalogError(String::from(
                             "Metadata does not exist",
                         ))));
                     }
+                } else {
+                    catalog.add_message(message);
                 }
-                map.insert(message.internal_key(), messages.len());
-                messages.push(message);
             }
         } else if line.starts_with("#.") {
             cur_str_buf = &mut state.cur_comments;
@@ -183,13 +182,8 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
 
     if state.dirty {
         let message = state.save_current_message();
-        map.insert(message.internal_key(), messages.len());
-        messages.push(message);
+        catalog.add_message(message);
     }
 
-    Ok(Catalog {
-        metadata: metadata.unwrap(),
-        messages,
-        map,
-    })
+    Ok(catalog)
 }
