@@ -1,6 +1,7 @@
 use super::escape::unescape;
-use crate::catalog::Catalog;
+use crate::catalog::{Catalog, InvalidCatalogError};
 use crate::message::*;
+use crate::metadata::CatalogMetadata;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::{BufRead, BufReader};
@@ -19,7 +20,7 @@ struct POParserState {
 }
 
 impl POParserState {
-    fn new(num_plural_forms: usize) -> Self {
+    fn new() -> Self {
         POParserState {
             cur_comments: String::new(),
             cur_source: String::new(),
@@ -28,9 +29,13 @@ impl POParserState {
             cur_msgid: String::new(),
             cur_msgid_plural: String::new(),
             cur_msgstr: String::new(),
-            cur_msgstr_plural: vec![String::new(); num_plural_forms],
+            cur_msgstr_plural: vec![String::new(); 10],
             dirty: false,
         }
+    }
+
+    fn set_nplurals(&mut self, nplurals: usize) {
+        self.cur_msgstr_plural.shrink_to(nplurals);
     }
 
     fn reset_singular(&mut self) {
@@ -98,34 +103,11 @@ fn append_new_line_str(buf: &mut String, content: &str) {
     buf.push_str(content);
 }
 
-fn find_num_plurals(path: &Path) -> Result<usize, std::io::Error> {
-    let file = std::fs::File::open(path)?;
-    let pattern = "Plural-Forms: nplurals=";
-    for line in BufReader::new(file).lines() {
-        let line = line?;
-        let line = line.as_str();
-        match line.find(pattern) {
-            Some(index) => {
-                return Ok(line
-                    .chars()
-                    .nth(index + pattern.len())
-                    .unwrap()
-                    .to_digit(10)
-                    .unwrap() as usize);
-            }
-            None => {
-                continue;
-            }
-        }
-    }
-    Ok(1)
-}
-
 pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
     let file = std::fs::File::open(path)?;
-    let num_plural_forms = find_num_plurals(path)?;
+    let mut metadata: Option<CatalogMetadata> = None;
     let mut messages: Vec<Message> = Vec::new();
-    let mut state = POParserState::new(num_plural_forms);
+    let mut state = POParserState::new();
     let mut idle_buf = String::new();
     let mut cur_str_buf = &mut state.cur_msgid;
     let mut map = HashMap::new();
@@ -136,6 +118,18 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
             cur_str_buf = &mut idle_buf;
             if state.dirty {
                 let message = state.save_current_message();
+                if metadata.is_none() {
+                    if message.get_msgid().unwrap().is_empty()
+                        && !message.get_msgstr().unwrap().is_empty()
+                    {
+                        metadata = Some(CatalogMetadata::parse(message.get_msgstr().unwrap()));
+                        state.set_nplurals(metadata.as_ref().unwrap().plural_rules.nplurals);
+                    } else {
+                        return Err(Box::new(InvalidCatalogError(String::from(
+                            "Metadata does not exist",
+                        ))));
+                    }
+                }
                 map.insert(message.internal_key(), messages.len());
                 messages.push(message);
             }
@@ -194,8 +188,7 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
     }
 
     Ok(Catalog {
-        num_plural_forms,
-        plural_eval: |_| 0,
+        metadata: metadata.unwrap(),
         messages,
         map,
     })

@@ -1,19 +1,29 @@
-use crate::message::*;
+use crate::{message::*, metadata::CatalogMetadata};
 use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
 
-#[derive(Debug)]
 pub struct Catalog {
-    pub num_plural_forms: usize,
-    pub plural_eval: fn(i64) -> usize,
+    pub metadata: CatalogMetadata,
     pub messages: Vec<Message>,
     pub(crate) map: HashMap<String, usize>,
 }
 
+#[derive(Debug)]
+pub(crate) struct InvalidCatalogError(pub String);
+
+impl fmt::Display for InvalidCatalogError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Invalid Catalog error: {}", self.0)
+    }
+}
+
+impl Error for InvalidCatalogError {}
+
 impl Catalog {
     pub fn new() -> Self {
         Catalog {
-            num_plural_forms: 1,
-            plural_eval: |_| 0,
+            metadata: CatalogMetadata::new(),
             messages: vec![],
             map: HashMap::new(),
         }
@@ -25,6 +35,10 @@ impl Catalog {
 
     pub fn find_ctxt_message_index(&self, msgctxt: &str, msgid: &str) -> Option<&usize> {
         self.map.get(&gen_internal_key(msgctxt, msgid))
+    }
+
+    pub fn get_message_by_index(&self, index: usize) -> Option<&Message> {
+        self.messages.get(index)
     }
 
     pub fn update_message_by_index(&mut self, index: usize, message: Message) -> Result<(), &str> {
@@ -44,61 +58,10 @@ impl Catalog {
         }
     }
 
-    pub fn find_message_ctxt(&self, msgctxt: &str, msgid: &str) -> Option<&Message> {
+    pub fn find_ctxt_message(&self, msgctxt: &str, msgid: &str) -> Option<&Message> {
         match self.find_ctxt_message_index(msgctxt, msgid) {
             Some(index) => Some(&self.messages[*index]),
             None => None,
-        }
-    }
-
-    pub fn translate<'a>(&'a self, query: &'a str) -> &'a str {
-        match self.find_message(query) {
-            Some(message) => message.get_msgstr().unwrap(),
-            None => query,
-        }
-    }
-
-    pub fn translate_ctxt<'a>(&'a self, ctxt: &'a str, query: &'a str) -> &'a str {
-        match self.find_message_ctxt(ctxt, query) {
-            Some(message) => message.get_msgstr().unwrap(),
-            None => query,
-        }
-    }
-
-    pub fn translate_plural<'a>(
-        &'a self,
-        query: &'a str,
-        query_plural: &'a str,
-        n: i64,
-    ) -> &'a str {
-        match self.find_message(query) {
-            Some(message) => &message.get_msgstr_plural().unwrap()[(self.plural_eval)(n)],
-            None => {
-                if n == 1 {
-                    query
-                } else {
-                    query_plural
-                }
-            }
-        }
-    }
-
-    pub fn translate_ctxt_plural<'a>(
-        &'a self,
-        ctxt: &'a str,
-        query: &'a str,
-        query_plural: &'a str,
-        n: i64,
-    ) -> &'a str {
-        match self.find_message_ctxt(ctxt, query) {
-            Some(message) => &message.get_msgstr_plural().unwrap()[(self.plural_eval)(n)],
-            None => {
-                if n == 1 {
-                    query
-                } else {
-                    query_plural
-                }
-            }
         }
     }
 }
