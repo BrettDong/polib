@@ -1,35 +1,56 @@
+//! `Message` struct and associated functions.
+
+/// The body of a singular message.
 #[derive(Debug)]
 pub struct SingularMessage {
+    /// `msgid` of the message.
     pub msgid: String,
+    /// `msgstr` of the message.
     pub msgstr: String,
 }
 
+/// The body of a plural message.
 #[derive(Debug)]
 pub struct PluralMessage {
+    /// `msgid` of the message.
     pub msgid: String,
+    /// `msgid_plural` of the message.
     pub msgid_plural: String,
+    /// vector of all plural forms of translation.
     pub msgstr_plural: Vec<String>,
 }
 
+/// Stores the body of either a singular message or a plural message.
 #[derive(Debug)]
 pub enum MessageBody {
+    /// The body of a singular message.
     Singular(SingularMessage),
+    /// The body of a singular message.
     Plural(PluralMessage),
 }
 
+/// Represents a single message entry.
 #[derive(Debug)]
 pub struct Message {
+    /// Developer comments of the message.
     pub comments: String,
+    /// Source code location of the message.
     pub source: String,
+    /// Flags of the message.
     pub flags: String,
+    /// `msgctxt` of the message.
     pub msgctxt: String,
+    /// body of the message in a enum.
     pub body: MessageBody,
 }
 
+/// Error type when trying to access a field not applicable to the singular or
+/// plural form of the message.
 #[derive(Debug)]
 pub struct SingularPluralMismatchError;
 
 impl Message {
+    /// Create a new singular message.
     pub fn new_singular(
         comments: &str,
         source: &str,
@@ -50,6 +71,7 @@ impl Message {
         }
     }
 
+    /// Create a new plural message.
     pub fn new_plural(
         comments: &str,
         source: &str,
@@ -72,10 +94,12 @@ impl Message {
         }
     }
 
+    /// Generate the internal hash map key of the message.
     pub fn internal_key(&self) -> String {
         gen_internal_key(self.get_msgctxt().unwrap(), self.get_msgid().unwrap())
     }
 
+    /// Whether the message is a singular message.
     pub fn is_singular(&self) -> bool {
         match &self.body {
             MessageBody::Singular(_) => true,
@@ -83,6 +107,7 @@ impl Message {
         }
     }
 
+    /// Whether the message is a plural message.
     pub fn is_plural(&self) -> bool {
         match &self.body {
             MessageBody::Singular(_) => false,
@@ -90,10 +115,12 @@ impl Message {
         }
     }
 
+    /// Get `msgctxt` of the message.
     pub fn get_msgctxt(&self) -> Result<&String, SingularPluralMismatchError> {
         Ok(&self.msgctxt)
     }
 
+    /// Get `msgid` of the message.
     pub fn get_msgid(&self) -> Result<&String, SingularPluralMismatchError> {
         match &self.body {
             MessageBody::Singular(singular) => Ok(&singular.msgid),
@@ -101,6 +128,7 @@ impl Message {
         }
     }
 
+    /// Get `msgid_plural` of the plural message.
     pub fn get_msgid_plural(&self) -> Result<&String, SingularPluralMismatchError> {
         match &self.body {
             MessageBody::Singular(_) => Err(SingularPluralMismatchError),
@@ -108,6 +136,7 @@ impl Message {
         }
     }
 
+    /// Get `msgstr` of the singular message.
     pub fn get_msgstr(&self) -> Result<&String, SingularPluralMismatchError> {
         match &self.body {
             MessageBody::Singular(singular) => Ok(&singular.msgstr),
@@ -115,6 +144,7 @@ impl Message {
         }
     }
 
+    /// Get the vector of all `msgstr_plural` of the plural message.
     pub fn get_msgstr_plural(&self) -> Result<&Vec<String>, SingularPluralMismatchError> {
         match &self.body {
             MessageBody::Singular(_) => Err(SingularPluralMismatchError),
@@ -123,6 +153,9 @@ impl Message {
     }
 }
 
+/// Generate the key of the message for hash map by concatenating
+/// `msgctxt`, `\u{0004}` and `msgid`. This representation is also
+/// used in MO binary translation catalog format in GNU gettext.
 pub fn gen_internal_key(msgctxt: &str, msgid: &str) -> String {
     if msgctxt.is_empty() {
         msgid.to_string()

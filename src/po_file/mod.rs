@@ -1,3 +1,5 @@
+//! Parsing and writing PO files.
+
 mod escape;
 pub mod po_file_parser;
 pub mod po_file_writer;

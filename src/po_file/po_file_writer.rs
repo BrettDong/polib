@@ -1,3 +1,5 @@
+//! Write PO files.
+
 use super::escape::escape;
 use crate::catalog::Catalog;
 use std::fs::OpenOptions;
@@ -97,6 +99,7 @@ fn write_field(
     Ok(())
 }
 
+/// Saves a catalog to a PO file on the disk.
 pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
     let file = OpenOptions::new()
         .read(false)

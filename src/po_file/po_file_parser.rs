@@ -1,3 +1,5 @@
+//! Parse PO files.
+
 use super::escape::unescape;
 use crate::catalog::{Catalog, InvalidCatalogError};
 use crate::message::*;
@@ -103,6 +105,7 @@ fn append_new_line_str(buf: &mut String, content: &str) {
     buf.push_str(content);
 }
 
+/// Parse the PO file and returns a catalog on success.
 pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
     let file = std::fs::File::open(path)?;
     let mut metadata_parsed = false;

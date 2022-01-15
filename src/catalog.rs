@@ -1,10 +1,15 @@
+//! `Catalog` struct and associated functions.
+
 use crate::{message::*, metadata::CatalogMetadata};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
+/// `Catalog` struct represents translation data stored in a `.po` file.
 pub struct Catalog {
+    /// Metadata of the catalog.
     pub metadata: CatalogMetadata,
+    /// All messages of the catalog.
     pub messages: Vec<Message>,
     pub(crate) map: HashMap<String, usize>,
 }
@@ -27,6 +32,7 @@ impl Default for Catalog {
 }
 
 impl Catalog {
+    /// Create a new empty catalog.
     pub fn new() -> Self {
         Catalog {
             metadata: CatalogMetadata::new(),
@@ -35,18 +41,24 @@ impl Catalog {
         }
     }
 
+    /// Find and return the index of a message by msgid,
+    /// or None if the message does not exist in the catalog.
     pub fn find_message_index(&self, msgid: &str) -> Option<&usize> {
         self.map.get(msgid)
     }
 
+    /// Find and return the index of a message with context by msgctxt and msgid,
+    /// or None if the message does not exist in the catalog.
     pub fn find_ctxt_message_index(&self, msgctxt: &str, msgid: &str) -> Option<&usize> {
         self.map.get(&gen_internal_key(msgctxt, msgid))
     }
 
+    /// Returns the reference to the message at the given index.
     pub fn get_message_by_index(&self, index: usize) -> Option<&Message> {
         self.messages.get(index)
     }
 
+    /// Updates the message at the given index.
     pub fn update_message_by_index(&mut self, index: usize, message: Message) -> Result<(), &str> {
         if index >= self.messages.len() {
             return Err("Index out of bound!");
@@ -57,6 +69,7 @@ impl Catalog {
         Ok(())
     }
 
+    /// Append a new message to the end of `messages` vector.
     pub fn add_message(&mut self, message: Message) {
         self.messages.push(message);
         self.map.insert(
@@ -65,6 +78,8 @@ impl Catalog {
         );
     }
 
+    /// Find and return a reference to the message by msgid,
+    /// or None if the message does not exist in the catalog.
     pub fn find_message(&self, msgid: &str) -> Option<&Message> {
         match self.find_message_index(msgid) {
             Some(index) => Some(&self.messages[*index]),
@@ -72,6 +87,8 @@ impl Catalog {
         }
     }
 
+    /// Find and return a reference to the message with context by msgctxt and msgid,
+    /// or None if the message does not exist in the catalog.
     pub fn find_ctxt_message(&self, msgctxt: &str, msgid: &str) -> Option<&Message> {
         match self.find_ctxt_message_index(msgctxt, msgid) {
             Some(index) => Some(&self.messages[*index]),

@@ -1,27 +1,45 @@
+//! `CatalogMetadata` and `CatalogPluralRules` struct, and associated functions.
+
 use std::collections::HashMap;
 
+/// The plural form resolution rule of the target language.
 pub struct CatalogPluralRules {
+    /// Total number of plural forms, including singular form.
     pub nplurals: usize,
+    /// The plural form resolution expression in the function of n.
     pub expr: String,
 }
 
+/// Error type when parsing an invalid plural rules.
 #[derive(Debug)]
 pub struct InvalidPluralRulesError;
 
+/// Metadata of a translation catalog.
 pub struct CatalogMetadata {
+    /// `Project-Id-Version`
     pub project_id_version: String,
+    /// `POT-Creation-Date`
     pub pot_creation_date: String,
+    /// `PO-Revision-Date`
     pub po_revision_date: String,
+    /// `Last-Translator`
     pub last_translator: String,
+    /// `Language-Team`
     pub language_team: String,
+    /// `MIME-Version`
     pub mime_version: String,
+    /// `Content-Type`
     pub content_type: String,
+    /// `Content-Transfer-Encoding`
     pub content_transfer_encoding: String,
+    /// `Language`
     pub language: String,
+    /// `Plural-Forms`
     pub plural_rules: CatalogPluralRules,
 }
 
 impl CatalogPluralRules {
+    /// Parse a plural resolution rules from string form stored in PO file.
     pub fn parse(rules: &str) -> Result<Self, InvalidPluralRulesError> {
         let mut nplurals: usize = 0;
         let mut expr = String::new();
@@ -51,6 +69,7 @@ impl CatalogPluralRules {
         }
     }
 
+    /// Dump the plural resolution rules to string form to write to a PO file.
     pub fn dump(&self) -> String {
         format!("nplurals={}; plural={};", self.nplurals, self.expr)
     }
@@ -63,6 +82,7 @@ impl Default for CatalogMetadata {
 }
 
 impl CatalogMetadata {
+    /// Create a new empty catalog metadata.
     pub fn new() -> Self {
         CatalogMetadata {
             project_id_version: String::new(),
@@ -81,6 +101,7 @@ impl CatalogMetadata {
         }
     }
 
+    /// Parse catalog metadata from string form stored in PO file.
     pub fn parse(metadata: &str) -> Self {
         let mut key_values = HashMap::new();
         for line in metadata.split('\n') {
@@ -106,6 +127,7 @@ impl CatalogMetadata {
         }
     }
 
+    /// Dump the metadata to string form to write to a PO file.
     pub fn dump(&self) -> String {
         let mut buffer = String::new();
         buffer.push_str(format!("Project-Id-Version: {}\n", self.project_id_version).as_str());
