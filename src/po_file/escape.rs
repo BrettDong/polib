@@ -1,4 +1,10 @@
 pub(super) fn escape(unescaped: &str) -> String {
+    if unescaped.find('\\').is_none()
+        && unescaped.find('"').is_none()
+        && unescaped.find('\n').is_none()
+    {
+        return unescaped.to_string();
+    }
     let mut escaped = String::new();
     for c in unescaped.to_string().chars() {
         match c {
