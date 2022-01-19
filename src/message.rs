@@ -115,6 +115,16 @@ impl Message {
         }
     }
 
+    /// Whether the message is translated.
+    pub fn is_translated(&self) -> bool {
+        match &self.body {
+            MessageBody::Singular(SingularMessage { msgstr, .. }) => !msgstr.is_empty(),
+            MessageBody::Plural(PluralMessage { msgstr_plural, .. }) => {
+                msgstr_plural.iter().all(|x| !x.is_empty())
+            }
+        }
+    }
+
     /// Get `msgctxt` of the message.
     pub fn get_msgctxt(&self) -> Result<&String, SingularPluralMismatchError> {
         Ok(&self.msgctxt)
