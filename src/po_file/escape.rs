@@ -2,6 +2,8 @@ pub(super) fn escape(unescaped: &str) -> String {
     if unescaped.find('\\').is_none()
         && unescaped.find('"').is_none()
         && unescaped.find('\n').is_none()
+        && unescaped.find('\r').is_none()
+        && unescaped.find('\t').is_none()
     {
         return unescaped.to_string();
     }
@@ -16,6 +18,12 @@ pub(super) fn escape(unescaped: &str) -> String {
             }
             '\n' => {
                 escaped.push_str("\\n");
+            }
+            '\r' => {
+                escaped.push_str("\\r");
+            }
+            '\t' => {
+                escaped.push_str("\\t");
             }
             _ => {
                 escaped.push(c);
@@ -44,10 +52,17 @@ pub(super) fn unescape(escaped: &str) -> Result<String, &str> {
                 'n' => {
                     unescaped.push('\n');
                 }
+                'r' => {
+                    unescaped.push('\r');
+                }
+                't' => {
+                    unescaped.push('\t');
+                }
                 '"' => {
                     unescaped.push('"');
                 }
                 _ => {
+                    println!("==> {:?}", escaped);
                     return Err("Bad string escape sequence");
                 }
             }
