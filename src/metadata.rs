@@ -113,7 +113,7 @@ impl CatalogMetadata {
             project_id_version: key_values.get("Project-Id-Version").unwrap().to_string(),
             pot_creation_date: key_values.get("POT-Creation-Date").unwrap().to_string(),
             po_revision_date: key_values.get("PO-Revision-Date").unwrap().to_string(),
-            last_translator: key_values.get("Last-Translator").unwrap().to_string(),
+            last_translator: key_values.get("Last-Translator").unwrap_or(&"").to_string(),
             language_team: key_values.get("Language-Team").unwrap().to_string(),
             mime_version: key_values.get("MIME-Version").unwrap().to_string(),
             content_type: key_values.get("Content-Type").unwrap().to_string(),
