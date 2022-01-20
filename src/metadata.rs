@@ -48,18 +48,18 @@ impl CatalogPluralRules {
             if rule.is_empty() {
                 continue;
             }
-            let segments: Vec<&str> = rule.split('=').collect();
-            if segments.len() != 2 {
+            if let Some((key, value)) = rule.split_once('=') {
+                match key {
+                    "nplurals" => {
+                        nplurals = value.parse().unwrap();
+                    }
+                    "plural" => {
+                        expr = value.to_string();
+                    }
+                    _ => {}
+                }
+            } else {
                 return Err(InvalidPluralRulesError);
-            }
-            match *segments.first().unwrap() {
-                "nplurals" => {
-                    nplurals = segments.last().unwrap().parse().unwrap();
-                }
-                "plural" => {
-                    expr = segments.last().unwrap().to_string();
-                }
-                _ => {}
             }
         }
         if nplurals == 0 || expr.is_empty() {
