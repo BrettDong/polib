@@ -1,6 +1,6 @@
 [package]
 name = "polib"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
 description = "Read, manipulate and store translation data in GNU gettext PO format."
 authors = [ "Brett Dong <brett.browning.dong@gmail.com>" ]
