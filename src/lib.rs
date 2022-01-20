@@ -1,9 +1,8 @@
 //! This crate allows users to load, manipulate and save translation data in
 //! GNU gettext `.po` file format.
 //!
-//! This crate is developed for the purpose of using Rust technology stack to
-//! do various kinds of data transmission, processing and analysis on
-//! translations data in the i18n of another project I am working on. The crate
+//! This crate is developed for the purpose of data transmission, processing
+//! and analysis on translations in another project I am working on. The crate
 //! is in early stage of its development and prioritizes the functionalities I
 //! need for my data analysis, and might not offer all the functionalities you
 //! expect. Feel free to open an issue or even make pull requests if you find

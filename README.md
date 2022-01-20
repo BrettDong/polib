@@ -1,5 +1,6 @@
 # `polib`
 
+![crates.io](https://img.shields.io/crates/v/polib.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![GitHub Actions](https://github.com/BrettDong/polib/actions/workflows/test.yaml/badge.svg)
 
