@@ -85,6 +85,25 @@ fn write_translated_repr(
     Ok(())
 }
 
+fn sorted_message_indices(catalog: &Catalog) -> Vec<usize> {
+    let mut indices = Vec::with_capacity(catalog.len());
+    let mut original_repr = Vec::with_capacity(catalog.len());
+
+    for i in 0..catalog.len() {
+        let message = catalog.get_message_by_index(i).unwrap();
+        if message.is_translated() {
+            indices.push(i);
+            original_repr.push(gen_original_repr(message));
+        } else {
+            original_repr.push(String::new());
+        }
+    }
+
+    indices.shrink_to_fit();
+    indices.sort_by(|&a, &b| original_repr[a].cmp(&original_repr[b]));
+    indices
+}
+
 /// Saves a catalog to a binary MO file.
 pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
     let file = OpenOptions::new()
@@ -95,21 +114,7 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
 
     let mut writer = BufWriter::new(file);
 
-    let mut indices = vec![];
-
-    for i in 0..catalog.messages.len() {
-        let message = catalog.get_message_by_index(i).unwrap();
-        if message.is_translated() {
-            indices.push(i);
-        }
-    }
-
-    indices.sort_by(|a, b| {
-        gen_original_repr(catalog.get_message_by_index(*a).unwrap()).cmp(&gen_original_repr(
-            catalog.get_message_by_index(*b).unwrap(),
-        ))
-    });
-
+    let indices = sorted_message_indices(catalog);
     let metadata = catalog.metadata.dump();
 
     // Header

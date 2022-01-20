@@ -41,6 +41,16 @@ impl Catalog {
         }
     }
 
+    /// Total number of messages contained in the catalog, excluding metadata.
+    pub fn len(&self) -> usize {
+        self.messages.len()
+    }
+
+    /// Whether the catalog is empty, i.e. does not contain any message other than metadata.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0usize
+    }
+
     /// Find and return the index of a message by msgid,
     /// or None if the message does not exist in the catalog.
     pub fn find_message_index(&self, msgid: &str) -> Option<&usize> {
