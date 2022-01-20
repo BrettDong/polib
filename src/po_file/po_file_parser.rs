@@ -114,8 +114,15 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
     let mut cur_str_buf = &mut state.cur_msgid;
     let mut catalog = Catalog::new();
 
-    for line in BufReader::new(file).lines() {
-        let line = line?;
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(100);
+    while reader.read_line(&mut line).unwrap_or(0usize) > 0 {
+        if line.ends_with('\n') {
+            line.pop();
+        }
+        if line.ends_with('\r') {
+            line.pop();
+        }
         if line.is_empty() {
             cur_str_buf = &mut idle_buf;
             if state.dirty {
@@ -182,6 +189,7 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
             append_str(cur_str_buf, &line[1..line.len() - 1]);
             state.dirty = true;
         }
+        line.clear();
     }
 
     if state.dirty {
