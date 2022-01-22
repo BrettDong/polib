@@ -1,7 +1,11 @@
 #![feature(test)]
 
 extern crate test;
-use polib::{catalog::Catalog, message::Message, po_file};
+use polib::{
+    catalog::Catalog,
+    message::Message,
+    po_file::{self, po_file_parser::POParseOptions},
+};
 use std::path::Path;
 use test::Bencher;
 
@@ -59,7 +63,9 @@ fn parse_po_file(bench: &mut Bencher) {
     let catalog = gen_rand_catalog();
     po_file::write(&catalog, path).unwrap();
     bench.iter(|| {
-        let messages = po_file::parse(path).unwrap().messages;
+        let messages = po_file::parse(path, &POParseOptions::default())
+            .unwrap()
+            .messages;
         messages.len()
     });
     std::fs::remove_file(path).unwrap();

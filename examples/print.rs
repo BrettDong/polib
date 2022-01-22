@@ -1,4 +1,5 @@
 use polib::po_file;
+use polib::po_file::po_file_parser::POParseOptions;
 use std::env;
 use std::error::Error;
 use std::path::Path;
@@ -11,7 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    let catalog = po_file::parse(Path::new(&path))?;
+    let catalog = po_file::parse(Path::new(&path), &POParseOptions::default())?;
     for message in catalog.messages {
         if message.is_plural() {
             println!(

@@ -1,11 +1,12 @@
 //! Parse PO files.
 
+extern crate linereader;
 use super::escape::unescape;
 use crate::catalog::{Catalog, InvalidCatalogError};
 use crate::message::*;
 use crate::metadata::CatalogMetadata;
+use linereader::LineReader;
 use std::error::Error;
-use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 struct POParserState {
@@ -105,8 +106,32 @@ fn append_new_line_str(buf: &mut String, content: &str) {
     buf.push_str(content);
 }
 
+/// PO file parse options.
+pub struct POParseOptions {
+    /// If true, only parse msgctxt, msgid and msgstr.
+    pub message_body_only: bool,
+    /// If true, skip parsing untranslated messages.
+    pub translated_only: bool,
+}
+
+impl POParseOptions {
+    /// Creates a default POParseOptions
+    pub fn new() -> Self {
+        POParseOptions {
+            message_body_only: false,
+            translated_only: false,
+        }
+    }
+}
+
+impl Default for POParseOptions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Parse the PO file and returns a catalog on success.
-pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
+pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, Box<dyn Error>> {
     let file = std::fs::File::open(path)?;
     let mut metadata_parsed = false;
     let mut state = POParserState::new();
@@ -114,14 +139,17 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
     let mut cur_str_buf = &mut state.cur_msgid;
     let mut catalog = Catalog::new();
 
-    let mut reader = BufReader::new(file);
-    let mut line = String::with_capacity(100);
-    while reader.read_line(&mut line).unwrap_or(0usize) > 0 {
+    let mut reader = LineReader::new(file);
+    while let Some(line) = reader.next_line() {
+        if line.is_err() {
+            return Err(Box::new(line.err().unwrap()));
+        }
+        let mut line = unsafe { std::str::from_utf8_unchecked(line.unwrap()) };
         if line.ends_with('\n') {
-            line.pop();
+            line = &line[0..line.len() - 1];
         }
         if line.ends_with('\r') {
-            line.pop();
+            line = &line[0..line.len() - 1];
         }
         if line.is_empty() {
             cur_str_buf = &mut idle_buf;
@@ -139,21 +167,34 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
                             "Metadata does not exist",
                         ))));
                     }
+                } else if options.translated_only {
+                    if message.is_singular() {
+                        if !message.get_msgstr().unwrap().is_empty() {
+                            catalog.add_message(message);
+                        }
+                    } else if message
+                        .get_msgstr_plural()
+                        .unwrap()
+                        .iter()
+                        .all(|x| !x.is_empty())
+                    {
+                        catalog.add_message(message);
+                    }
                 } else {
                     catalog.add_message(message);
                 }
             }
-        } else if line.starts_with("#.") {
+        } else if line.starts_with("#.") && !options.message_body_only {
             cur_str_buf = &mut state.cur_comments;
-            append_new_line_str(cur_str_buf, &line.as_str()[3..]);
+            append_new_line_str(cur_str_buf, &line[3..]);
             state.dirty = true;
-        } else if line.starts_with("#:") {
+        } else if line.starts_with("#:") && !options.message_body_only {
             cur_str_buf = &mut state.cur_source;
-            append_new_line_str(cur_str_buf, &line.as_str()[3..]);
+            append_new_line_str(cur_str_buf, &line[3..]);
             state.dirty = true;
-        } else if line.starts_with("#,") {
+        } else if line.starts_with("#,") && !options.message_body_only {
             cur_str_buf = &mut state.cur_flags;
-            append_new_line_str(cur_str_buf, &line.as_str()[3..]);
+            append_new_line_str(cur_str_buf, &line[3..]);
             state.dirty = true;
         } else if line.starts_with("msgctxt ") {
             cur_str_buf = &mut state.cur_msgctxt;
@@ -182,19 +223,32 @@ pub fn parse(path: &Path) -> Result<Catalog, Box<dyn Error>> {
         } else if line.starts_with("msgstr[") {
             let index = line.chars().nth(7).unwrap().to_digit(10).unwrap() as usize;
             cur_str_buf = &mut state.cur_msgstr_plural[index];
-            let trimmed = &line.as_str()[10..];
+            let trimmed = &line[10..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
             state.dirty = true;
         } else if line.starts_with('"') {
             append_str(cur_str_buf, &line[1..line.len() - 1]);
-            state.dirty = true;
         }
-        line.clear();
     }
 
     if state.dirty {
         let message = state.save_current_message();
-        catalog.add_message(message);
+        if options.translated_only {
+            if message.is_singular() {
+                if !message.get_msgstr().unwrap().is_empty() {
+                    catalog.add_message(message);
+                }
+            } else if message
+                .get_msgstr_plural()
+                .unwrap()
+                .iter()
+                .all(|x| !x.is_empty())
+            {
+                catalog.add_message(message);
+            }
+        } else {
+            catalog.add_message(message);
+        }
     }
 
     Ok(catalog)
