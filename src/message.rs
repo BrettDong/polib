@@ -1,33 +1,6 @@
 //! `Message` struct and associated functions.
 
-/// The body of a singular message.
-#[derive(Debug)]
-pub struct SingularMessage {
-    /// `msgid` of the message.
-    pub msgid: String,
-    /// `msgstr` of the message.
-    pub msgstr: String,
-}
-
-/// The body of a plural message.
-#[derive(Debug)]
-pub struct PluralMessage {
-    /// `msgid` of the message.
-    pub msgid: String,
-    /// `msgid_plural` of the message.
-    pub msgid_plural: String,
-    /// vector of all plural forms of translation.
-    pub msgstr_plural: Vec<String>,
-}
-
-/// Stores the body of either a singular message or a plural message.
-#[derive(Debug)]
-pub enum MessageBody {
-    /// The body of a singular message.
-    Singular(SingularMessage),
-    /// The body of a singular message.
-    Plural(PluralMessage),
-}
+use std::convert::Infallible;
 
 /// Represents a single message entry.
 #[derive(Debug)]
@@ -40,8 +13,16 @@ pub struct Message {
     pub flags: String,
     /// `msgctxt` of the message.
     pub msgctxt: String,
-    /// body of the message in a enum.
-    pub body: MessageBody,
+    /// `msgid` of the message.
+    pub msgid: String,
+    /// `msgid_plural` of the plural message.
+    pub msgid_plural: String,
+    /// `msgstr` of the singular message.
+    pub msgstr: String,
+    /// vector of all plural forms of translation.
+    pub msgstr_plural: Vec<String>,
+    /// Whether the message is plural
+    pub is_plural: bool,
 }
 
 /// Error type when trying to access a field not applicable to the singular or
@@ -50,6 +31,20 @@ pub struct Message {
 pub struct SingularPluralMismatchError;
 
 impl Message {
+    pub(crate) fn new() -> Self {
+        Message {
+            comments: String::new(),
+            source: String::new(),
+            flags: String::new(),
+            msgctxt: String::new(),
+            msgid: String::new(),
+            msgid_plural: String::new(),
+            msgstr: String::new(),
+            msgstr_plural: vec![],
+            is_plural: false,
+        }
+    }
+
     /// Create a new singular message.
     pub fn new_singular(
         comments: &str,
@@ -64,10 +59,11 @@ impl Message {
             source: source.to_string(),
             flags: flags.to_string(),
             msgctxt: msgctxt.to_string(),
-            body: MessageBody::Singular(SingularMessage {
-                msgid: msgid.to_string(),
-                msgstr: msgstr.to_string(),
-            }),
+            msgid: msgid.to_string(),
+            msgstr: msgstr.to_string(),
+            msgid_plural: String::new(),
+            msgstr_plural: vec![],
+            is_plural: false,
         }
     }
 
@@ -86,11 +82,11 @@ impl Message {
             source: source.to_string(),
             flags: flags.to_string(),
             msgctxt: msgctxt.to_string(),
-            body: MessageBody::Plural(PluralMessage {
-                msgid: msgid.to_string(),
-                msgid_plural: msgid_plural.to_string(),
-                msgstr_plural: msgstr_plural.to_vec(),
-            }),
+            msgid: msgid.to_string(),
+            msgid_plural: msgid_plural.to_string(),
+            msgstr: String::new(),
+            msgstr_plural: msgstr_plural.to_vec(),
+            is_plural: true,
         }
     }
 
@@ -101,27 +97,20 @@ impl Message {
 
     /// Whether the message is a singular message.
     pub fn is_singular(&self) -> bool {
-        match &self.body {
-            MessageBody::Singular(_) => true,
-            MessageBody::Plural(_) => false,
-        }
+        !self.is_plural
     }
 
     /// Whether the message is a plural message.
     pub fn is_plural(&self) -> bool {
-        match &self.body {
-            MessageBody::Singular(_) => false,
-            MessageBody::Plural(_) => true,
-        }
+        self.is_plural
     }
 
     /// Whether the message is translated.
     pub fn is_translated(&self) -> bool {
-        match &self.body {
-            MessageBody::Singular(SingularMessage { msgstr, .. }) => !msgstr.is_empty(),
-            MessageBody::Plural(PluralMessage { msgstr_plural, .. }) => {
-                msgstr_plural.iter().all(|x| !x.is_empty())
-            }
+        if self.is_plural {
+            self.msgstr_plural.iter().all(|x| !x.is_empty())
+        } else {
+            !self.msgstr.is_empty()
         }
     }
 
@@ -131,34 +120,34 @@ impl Message {
     }
 
     /// Get `msgid` of the message.
-    pub fn get_msgid(&self) -> Result<&String, SingularPluralMismatchError> {
-        match &self.body {
-            MessageBody::Singular(singular) => Ok(&singular.msgid),
-            MessageBody::Plural(plural) => Ok(&plural.msgid),
-        }
+    pub fn get_msgid(&self) -> Result<&String, Infallible> {
+        Ok(&self.msgid)
     }
 
     /// Get `msgid_plural` of the plural message.
     pub fn get_msgid_plural(&self) -> Result<&String, SingularPluralMismatchError> {
-        match &self.body {
-            MessageBody::Singular(_) => Err(SingularPluralMismatchError),
-            MessageBody::Plural(plural) => Ok(&plural.msgid_plural),
+        if self.is_plural {
+            Ok(&self.msgid_plural)
+        } else {
+            Err(SingularPluralMismatchError)
         }
     }
 
     /// Get `msgstr` of the singular message.
     pub fn get_msgstr(&self) -> Result<&String, SingularPluralMismatchError> {
-        match &self.body {
-            MessageBody::Singular(singular) => Ok(&singular.msgstr),
-            MessageBody::Plural(_) => Err(SingularPluralMismatchError),
+        if self.is_plural {
+            Err(SingularPluralMismatchError)
+        } else {
+            Ok(&self.msgstr)
         }
     }
 
     /// Get the vector of all `msgstr_plural` of the plural message.
     pub fn get_msgstr_plural(&self) -> Result<&Vec<String>, SingularPluralMismatchError> {
-        match &self.body {
-            MessageBody::Singular(_) => Err(SingularPluralMismatchError),
-            MessageBody::Plural(plural) => Ok(&plural.msgstr_plural),
+        if self.is_plural {
+            Ok(&self.msgstr_plural)
+        } else {
+            Err(SingularPluralMismatchError)
         }
     }
 }

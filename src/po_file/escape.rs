@@ -34,42 +34,44 @@ pub(super) fn escape(unescaped: &str) -> String {
 }
 
 pub(super) fn unescape(escaped: &str) -> Result<String, &str> {
-    if escaped.find('\\').is_none() {
-        return Ok(escaped.to_string());
-    }
-    let escaped: Vec<char> = escaped.to_string().chars().collect();
-    let mut unescaped = String::new();
-    let mut i = 0;
-    while i < escaped.len() {
-        if escaped[i] != '\\' || i == escaped.len() - 1 {
-            unescaped.push(escaped[i]);
-        } else {
-            i += 1;
-            match escaped[i] {
-                '\\' => {
-                    unescaped.push('\\');
-                }
-                'n' => {
-                    unescaped.push('\n');
-                }
-                'r' => {
-                    unescaped.push('\r');
-                }
-                't' => {
-                    unescaped.push('\t');
-                }
-                '"' => {
-                    unescaped.push('"');
-                }
-                _ => {
-                    println!("==> {:?}", escaped);
-                    return Err("Bad string escape sequence");
+    let first_backslash = escaped.find('\\');
+    if let Some(i) = first_backslash {
+        let mut unescaped = String::from(&escaped[0..i]);
+        let escaped: Vec<char> = escaped[i..].to_string().chars().collect();
+        let mut i = 0;
+        while i < escaped.len() {
+            if escaped[i] != '\\' || i == escaped.len() - 1 {
+                unescaped.push(escaped[i]);
+            } else {
+                i += 1;
+                match escaped[i] {
+                    '\\' => {
+                        unescaped.push('\\');
+                    }
+                    'n' => {
+                        unescaped.push('\n');
+                    }
+                    'r' => {
+                        unescaped.push('\r');
+                    }
+                    't' => {
+                        unescaped.push('\t');
+                    }
+                    '"' => {
+                        unescaped.push('"');
+                    }
+                    _ => {
+                        println!("==> {:?}", escaped);
+                        return Err("Bad string escape sequence");
+                    }
                 }
             }
+            i += 1;
         }
-        i += 1;
+        Ok(unescaped)
+    } else {
+        Ok(escaped.to_string())
     }
-    Ok(unescaped)
 }
 
 mod test {

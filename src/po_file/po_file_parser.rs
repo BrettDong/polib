@@ -9,92 +9,6 @@ use linereader::LineReader;
 use std::error::Error;
 use std::path::Path;
 
-struct POParserState {
-    cur_comments: String,
-    cur_source: String,
-    cur_flags: String,
-    cur_msgctxt: String,
-    cur_msgid: String,
-    cur_msgid_plural: String,
-    cur_msgstr: String,
-    cur_msgstr_plural: Vec<String>,
-    dirty: bool,
-}
-
-impl POParserState {
-    fn new() -> Self {
-        POParserState {
-            cur_comments: String::new(),
-            cur_source: String::new(),
-            cur_flags: String::new(),
-            cur_msgctxt: String::new(),
-            cur_msgid: String::new(),
-            cur_msgid_plural: String::new(),
-            cur_msgstr: String::new(),
-            cur_msgstr_plural: vec![String::new(); 10],
-            dirty: false,
-        }
-    }
-
-    fn set_nplurals(&mut self, nplurals: usize) {
-        self.cur_msgstr_plural.clear();
-        self.cur_msgstr_plural.resize(nplurals, String::new());
-    }
-
-    fn reset_singular(&mut self) {
-        self.cur_comments.clear();
-        self.cur_source.clear();
-        self.cur_flags.clear();
-        self.cur_msgctxt.clear();
-        self.cur_msgid.clear();
-        self.cur_msgstr.clear();
-    }
-
-    fn reset_plural(&mut self) {
-        self.cur_comments.clear();
-        self.cur_source.clear();
-        self.cur_flags.clear();
-        self.cur_msgctxt.clear();
-        self.cur_msgid.clear();
-        self.cur_msgid_plural.clear();
-        for form in self.cur_msgstr_plural.iter_mut() {
-            form.clear();
-        }
-    }
-
-    fn save_current_message(&mut self) -> Message {
-        let result;
-        if self.cur_msgid_plural.is_empty() {
-            result = Message::new_singular(
-                &self.cur_comments,
-                &self.cur_source,
-                &self.cur_flags,
-                unescape(&self.cur_msgctxt).unwrap().as_str(),
-                unescape(&self.cur_msgid).unwrap().as_str(),
-                unescape(&self.cur_msgstr).unwrap().as_str(),
-            );
-            self.reset_singular();
-        } else {
-            let escaped_plural_translations = self
-                .cur_msgstr_plural
-                .iter()
-                .map(|s| unescape(s).unwrap())
-                .collect();
-            result = Message::new_plural(
-                &self.cur_comments,
-                &self.cur_source,
-                &self.cur_flags,
-                unescape(&self.cur_msgctxt).unwrap().as_str(),
-                unescape(&self.cur_msgid).unwrap().as_str(),
-                unescape(&self.cur_msgid_plural).unwrap().as_str(),
-                escaped_plural_translations,
-            );
-            self.reset_plural();
-        }
-        result
-    }
-}
-
 fn append_str(buf: &mut String, content: &str) {
     buf.push_str(content);
 }
@@ -112,6 +26,8 @@ pub struct POParseOptions {
     pub message_body_only: bool,
     /// If true, skip parsing untranslated messages.
     pub translated_only: bool,
+    /// If false, skip maintaining internal hash map.
+    pub hash_map: bool,
 }
 
 impl POParseOptions {
@@ -120,6 +36,7 @@ impl POParseOptions {
         POParseOptions {
             message_body_only: false,
             translated_only: false,
+            hash_map: true,
         }
     }
 }
@@ -134,10 +51,11 @@ impl Default for POParseOptions {
 pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, Box<dyn Error>> {
     let file = std::fs::File::open(path)?;
     let mut metadata_parsed = false;
-    let mut state = POParserState::new();
     let mut idle_buf = String::new();
-    let mut cur_str_buf = &mut state.cur_msgid;
+    let mut cur_str_buf = &mut idle_buf;
     let mut catalog = Catalog::new();
+    catalog.messages.push(Message::new());
+    let mut clean = true;
 
     let mut reader = LineReader::new(file);
     while let Some(line) = reader.next_line() {
@@ -153,101 +71,100 @@ pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, Box<dyn E
         }
         if line.is_empty() {
             cur_str_buf = &mut idle_buf;
-            if state.dirty {
-                let message = state.save_current_message();
+            if !clean {
                 if !metadata_parsed {
-                    if message.get_msgid().unwrap().is_empty()
-                        && !message.get_msgstr().unwrap().is_empty()
+                    let metadata_message = catalog.messages.remove(0);
+                    if metadata_message.get_msgid().unwrap().is_empty()
+                        && metadata_message.is_translated()
                     {
-                        catalog.metadata = CatalogMetadata::parse(message.get_msgstr().unwrap());
-                        state.set_nplurals(catalog.metadata.plural_rules.nplurals);
+                        catalog.metadata =
+                            CatalogMetadata::parse(&unescape(&metadata_message.msgstr).unwrap());
                         metadata_parsed = true;
                     } else {
                         return Err(Box::new(InvalidCatalogError(String::from(
-                            "Metadata does not exist",
+                            "Metadata does not exist or is ill formed",
                         ))));
                     }
-                } else if options.translated_only {
+                } else if !options.translated_only
+                    || catalog.messages.last().unwrap().is_translated()
+                {
+                    let mut message = catalog.messages.last_mut().unwrap();
                     if message.is_singular() {
-                        if !message.get_msgstr().unwrap().is_empty() {
-                            catalog.add_message(message);
-                        }
-                    } else if message
-                        .get_msgstr_plural()
-                        .unwrap()
-                        .iter()
-                        .all(|x| !x.is_empty())
-                    {
-                        catalog.add_message(message);
+                        message.msgctxt = unescape(&message.msgctxt)?;
+                        message.msgid = unescape(&message.msgid)?;
+                        message.msgstr = unescape(&message.msgstr)?;
+                    } else {
+                        message.msgctxt = unescape(&message.msgctxt)?;
+                        message.msgid = unescape(&message.msgid)?;
+                        message.msgid_plural = unescape(&message.msgid_plural)?;
+                        message
+                            .msgstr_plural
+                            .iter_mut()
+                            .for_each(|plural| *plural = unescape(plural).unwrap());
                     }
                 } else {
-                    catalog.add_message(message);
+                    catalog.messages.remove(catalog.messages.len() - 1);
                 }
+                catalog.messages.push(Message::new());
+                clean = true;
             }
         } else if line.starts_with("#.") && !options.message_body_only {
-            cur_str_buf = &mut state.cur_comments;
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().comments;
             append_new_line_str(cur_str_buf, &line[3..]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with("#:") && !options.message_body_only {
-            cur_str_buf = &mut state.cur_source;
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().source;
             append_new_line_str(cur_str_buf, &line[3..]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with("#,") && !options.message_body_only {
-            cur_str_buf = &mut state.cur_flags;
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().flags;
             append_new_line_str(cur_str_buf, &line[3..]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with("msgctxt ") {
-            cur_str_buf = &mut state.cur_msgctxt;
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().msgctxt;
             let prefix_len = "msgctxt ".len();
             let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with("msgid ") {
-            cur_str_buf = &mut state.cur_msgid;
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().msgid;
             let prefix_len = "msgid ".len();
             let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with("msgid_plural ") {
-            cur_str_buf = &mut state.cur_msgid_plural;
+            catalog.messages.last_mut().unwrap().is_plural = true;
+            catalog
+                .messages
+                .last_mut()
+                .unwrap()
+                .msgstr_plural
+                .resize(catalog.metadata.plural_rules.nplurals, String::new());
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().msgid_plural;
             let prefix_len = "msgid_plural ".len();
             let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with("msgstr ") {
-            cur_str_buf = &mut state.cur_msgstr;
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().msgstr;
             let prefix_len = "msgstr ".len();
             let trimmed = &line[prefix_len..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with("msgstr[") {
             let index = line.chars().nth(7).unwrap().to_digit(10).unwrap() as usize;
-            cur_str_buf = &mut state.cur_msgstr_plural[index];
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().msgstr_plural[index];
             let trimmed = &line[10..];
             append_str(cur_str_buf, &trimmed[1..trimmed.len() - 1]);
-            state.dirty = true;
+            clean = false;
         } else if line.starts_with('"') {
             append_str(cur_str_buf, &line[1..line.len() - 1]);
         }
     }
 
-    if state.dirty {
-        let message = state.save_current_message();
-        if options.translated_only {
-            if message.is_singular() {
-                if !message.get_msgstr().unwrap().is_empty() {
-                    catalog.add_message(message);
-                }
-            } else if message
-                .get_msgstr_plural()
-                .unwrap()
-                .iter()
-                .all(|x| !x.is_empty())
-            {
-                catalog.add_message(message);
-            }
-        } else {
-            catalog.add_message(message);
+    if options.hash_map {
+        for (i, message) in catalog.messages.iter().enumerate() {
+            catalog.map.insert(message.internal_key(), i);
         }
     }
 
