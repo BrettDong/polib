@@ -2,7 +2,7 @@
 
 use super::escape::escape;
 use crate::catalog::Catalog;
-use std::fs::OpenOptions;
+use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
@@ -101,12 +101,7 @@ fn write_field(
 
 /// Saves a catalog to a PO file on the disk.
 pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
-    let file = OpenOptions::new()
-        .read(false)
-        .write(true)
-        .create(true)
-        .append(false)
-        .open(path)?;
+    let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
     writer.write_all(b"\nmsgid \"\"\n")?;
     write_field(&mut writer, "msgstr", catalog.metadata.dump().as_str())?;

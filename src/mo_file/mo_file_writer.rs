@@ -1,7 +1,7 @@
 //! Write MO files.
 
 use std::{
-    fs::OpenOptions,
+    fs::File,
     io::{BufWriter, Write},
     path::Path,
 };
@@ -106,12 +106,7 @@ fn sorted_message_indices(catalog: &Catalog) -> Vec<usize> {
 
 /// Saves a catalog to a binary MO file.
 pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .append(false)
-        .open(path)?;
-
+    let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
 
     let indices = sorted_message_indices(catalog);
