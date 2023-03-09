@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
-/// `Catalog` struct represents translation data stored in a `.po` file.
+/// `Catalog` struct represents the set of _Messages_ stored in a `.po` or `.mo` file.
 pub struct Catalog {
     /// Metadata of the catalog.
     pub metadata: CatalogMetadata,
