@@ -123,7 +123,7 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
         }
         if !message.flags.is_empty() {
             writer.write_all(b"#, ")?;
-            writer.write_all(message.flags.as_bytes())?;
+            writer.write_all(message.flags.export().as_bytes())?;
             writer.write_all(b"\n")?;
         }
         if !message.msgctxt.is_empty() {

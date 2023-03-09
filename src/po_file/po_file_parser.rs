@@ -102,6 +102,8 @@ pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, Box<dyn E
                             .iter_mut()
                             .for_each(|plural| *plural = unescape(plural).unwrap());
                     }
+                    message.flags = MessageFlags::parse(message.flags_str.as_str());
+                    message.flags_str.clear();
                 } else {
                     catalog.messages.remove(catalog.messages.len() - 1);
                 }
@@ -117,7 +119,7 @@ pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, Box<dyn E
             append_new_line_str(cur_str_buf, &line[3..]);
             clean = false;
         } else if line.starts_with("#,") && !options.message_body_only {
-            cur_str_buf = &mut catalog.messages.last_mut().unwrap().flags;
+            cur_str_buf = &mut catalog.messages.last_mut().unwrap().flags_str;
             append_new_line_str(cur_str_buf, &line[3..]);
             clean = false;
         } else if line.starts_with("msgctxt ") {

@@ -2,6 +2,13 @@
 
 use std::convert::Infallible;
 
+/// Represents the set of flags in a message
+#[derive(Debug)]
+pub struct MessageFlags {
+    /// Vector of individual flags
+    pub entries: Vec<String>,
+}
+
 /// Represents a single message entry.
 #[derive(Debug)]
 pub struct Message {
@@ -10,7 +17,9 @@ pub struct Message {
     /// Source code location of the message.
     pub source: String,
     /// Flags of the message.
-    pub flags: String,
+    pub flags: MessageFlags,
+    /// (internal) String form of flag list, only used when parsing a PO file
+    pub(crate) flags_str: String,
     /// `msgctxt` of the message.
     pub msgctxt: String,
     /// `msgid` of the message.
@@ -30,12 +39,64 @@ pub struct Message {
 #[derive(Debug)]
 pub struct SingularPluralMismatchError;
 
+impl Default for MessageFlags {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl MessageFlags {
+    /// Create an empty set of flags
+    pub fn new() -> Self {
+        MessageFlags { entries: vec![] }
+    }
+
+    /// Parse flags line from PO file
+    pub fn parse(flags: &str) -> Self {
+        let flags = flags.replace('\n', "");
+        let segments = flags.split(',');
+        let mut result = Self::new();
+        for x in segments {
+            if !x.is_empty() {
+                result.entries.push(String::from(x.trim()));
+            }
+        }
+        result
+    }
+
+    /// Export in PO file format
+    pub fn export(&self) -> String {
+        if self.is_empty() {
+            String::new()
+        } else {
+            self.entries.join(", ")
+        }
+    }
+
+    /// Is the set of flags empty?
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// Is a flag present?
+    pub fn contains(&self, flag: &str) -> bool {
+        let flag = flag.to_string();
+        self.entries.contains(&flag)
+    }
+
+    /// Is fuzzy flag present?
+    pub fn is_fuzzy(&self) -> bool {
+        self.contains("fuzzy")
+    }
+}
+
 impl Message {
     pub(crate) fn new() -> Self {
         Message {
             comments: String::new(),
             source: String::new(),
-            flags: String::new(),
+            flags: MessageFlags::new(),
+            flags_str: String::new(),
             msgctxt: String::new(),
             msgid: String::new(),
             msgid_plural: String::new(),
@@ -57,7 +118,8 @@ impl Message {
         Message {
             comments: comments.to_string(),
             source: source.to_string(),
-            flags: flags.to_string(),
+            flags: MessageFlags::parse(flags),
+            flags_str: String::new(),
             msgctxt: msgctxt.to_string(),
             msgid: msgid.to_string(),
             msgstr: msgstr.to_string(),
@@ -80,7 +142,8 @@ impl Message {
         Message {
             comments: comments.to_string(),
             source: source.to_string(),
-            flags: flags.to_string(),
+            flags: MessageFlags::parse(flags),
+            flags_str: String::new(),
             msgctxt: msgctxt.to_string(),
             msgid: msgid.to_string(),
             msgid_plural: msgid_plural.to_string(),
@@ -164,6 +227,37 @@ pub fn gen_internal_key(msgctxt: &str, msgid: &str) -> String {
 }
 
 mod test {
+    #[test]
+    fn test_flags_from_string() {
+        use crate::message::MessageFlags;
+        assert_eq!(MessageFlags::parse("").entries, Vec::<String>::new());
+        assert_eq!(MessageFlags::parse("fuzzy").entries, vec!["fuzzy"]);
+        assert_eq!(
+            MessageFlags::parse("c-format, fuzzy").entries,
+            vec!["c-format", "fuzzy"]
+        );
+    }
+
+    #[test]
+    fn test_flags_to_string() {
+        use crate::message::MessageFlags;
+        assert_eq!(MessageFlags { entries: vec![] }.export(), "");
+        assert_eq!(
+            MessageFlags {
+                entries: vec![String::from("fuzzy")]
+            }
+            .export(),
+            "fuzzy"
+        );
+        assert_eq!(
+            MessageFlags {
+                entries: vec![String::from("c-format"), String::from("fuzzy")]
+            }
+            .export(),
+            "c-format, fuzzy"
+        );
+    }
+
     #[test]
     fn test_internal_key_without_ctxt() {
         use crate::message::Message;
