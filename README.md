@@ -18,7 +18,9 @@ A **Catalog** holds a collection of _Messages_, and is stored in a `.po` file.
 
 ```rust
 use polib::po_file;
-use polib::po_file::ParseOptions;
+use polib::po_file::POParseOptions;
+use std::error::Error;
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let catalog = po_file::parse(Path::new("foo.po"), &POParseOptions::default())?;
@@ -33,7 +35,30 @@ fn main() -> Result<(), Box<dyn Error>> {
             println!("{} is untranslated", message.msgid());
         }
     }
+    Ok(())
 }
+```
+
+### Remove fuzzy entries and save to another `.po` file
+
+```rust
+let mut catalog = po_file::parse(Path::new("in.po"), &POParseOptions::default())?;
+let mut filtered: usize = 0;
+for message in catalog.messages_mut() {
+    if message.is_fuzzy() {
+        message.delete();
+        filtered += 1;
+    }
+}
+println!("{} fuzzy message(s) removed.", filtered);
+po_file::write(&catalog, Path::new("out.po"))?;
+```
+
+### Compile a `.po` file to `.mo` format
+
+```rust
+let catalog = po_file::parse(Path::new("in.po"), &POParseOptions::default())?;
+mo_file::write(&catalog, Path::new("out.mo"))?;
 ```
 
 ## Documentation
