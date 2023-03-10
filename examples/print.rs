@@ -12,8 +12,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    let mut catalog = po_file::parse(Path::new(&path), &POParseOptions::default())?;
-    for message in catalog.messages_mut() {
+    let catalog = po_file::parse(Path::new(&path), &POParseOptions::default())?;
+    for message in catalog.messages() {
         if message.is_translated() {
             println!(
                 "{} => {}",

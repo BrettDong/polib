@@ -9,6 +9,7 @@ use crate::metadata::{CatalogMetadata, MetadataParseError};
 use crate::po_file::escape::UnescapeError;
 use linereader::LineReader;
 use std::path::Path;
+use std::str::{FromStr, Utf8Error};
 
 /// PO file parse options.
 #[derive(Clone, Copy, Default)]
@@ -58,6 +59,14 @@ impl From<MetadataParseError> for POParseError {
 
 impl From<UnescapeError> for POParseError {
     fn from(value: UnescapeError) -> Self {
+        Self {
+            message: value.to_string(),
+        }
+    }
+}
+
+impl From<Utf8Error> for POParseError {
+    fn from(value: Utf8Error) -> Self {
         Self {
             message: value.to_string(),
         }
@@ -134,7 +143,7 @@ impl POParserState {
             options: *options,
             current_message: POMessage::default(),
             current_field: POMessageField::None,
-            catalog: Catalog::new(),
+            catalog: Catalog::empty(),
         }
     }
 
@@ -187,24 +196,28 @@ impl POParserState {
                 for plural_form in po_message.msgstr_plural.iter_mut() {
                     *plural_form = unescape(plural_form)?;
                 }
-                self.catalog.append_or_update(Message::move_plural_from(
-                    po_message.comments,
-                    po_message.source,
-                    po_message.flags,
-                    unescape(&po_message.msgctxt)?,
-                    unescape(&po_message.msgid)?,
-                    unescape(&po_message.msgid_plural)?,
-                    po_message.msgstr_plural,
-                ));
+                self.catalog.append_or_update(
+                    Message::build_plural()
+                        .with_comments(po_message.comments)
+                        .with_source(po_message.source)
+                        .with_flags(MessageFlags::from_str(&po_message.flags).unwrap())
+                        .with_msgctxt(unescape(&po_message.msgctxt)?)
+                        .with_msgid(unescape(&po_message.msgid)?)
+                        .with_msgid_plural(unescape(&po_message.msgid_plural)?)
+                        .with_msgstr_plural(po_message.msgstr_plural)
+                        .done(),
+                );
             } else {
-                self.catalog.append_or_update(Message::move_singular_from(
-                    po_message.comments,
-                    po_message.source,
-                    po_message.flags,
-                    unescape(&po_message.msgctxt)?,
-                    unescape(&po_message.msgid)?,
-                    unescape(&po_message.msgstr)?,
-                ));
+                self.catalog.append_or_update(
+                    Message::build_singular()
+                        .with_comments(po_message.comments)
+                        .with_source(po_message.source)
+                        .with_flags(MessageFlags::from_str(&po_message.flags).unwrap())
+                        .with_msgctxt(unescape(&po_message.msgctxt)?)
+                        .with_msgid(unescape(&po_message.msgid)?)
+                        .with_msgstr(unescape(&po_message.msgstr)?)
+                        .done(),
+                );
             }
         }
         Ok(())
@@ -274,7 +287,8 @@ pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, POParseEr
     let mut reader = LineReader::new(file);
     while let Some(line) = reader.next_line() {
         let line = line?;
-        let mut line = unsafe { std::str::from_utf8_unchecked(line) };
+        //let mut line = unsafe { std::str::from_utf8_unchecked(line) };
+        let mut line = std::str::from_utf8(line)?;
         if line.ends_with('\n') {
             line = &line[0..line.len() - 1];
         }

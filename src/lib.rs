@@ -1,5 +1,6 @@
 //! This crate allows users to load, manipulate and save translation data in
-//! GNU gettext `.po` file format.
+//! GNU gettext `.po` file format. Saving translation data into `.mo` file format
+//! is also supported. For simplicity, only UTF-8 encoding is supported.
 //!
 //! _Message_ represents an entry in the translation data that maps a string
 //! or a pair strings in singular and plural forms in original language to a

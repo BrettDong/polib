@@ -2,17 +2,18 @@
 
 use crate::catalog::Catalog;
 use crate::message::{
-    Message, MessageFlags, MessageKey, MessageView, MutableMessageView, SingularPluralMismatchError,
+    CatalogMessageMutView, Message, MessageFlags, MessageKey, MessageMutView, MessageView,
+    SingularPluralMismatchError,
 };
 
 /// An immutable iterator over messages in a catalog.
-pub struct CatalogIterator<'a> {
+pub struct MessageIterator<'a> {
     catalog: &'a Catalog,
     next_index: usize,
 }
 
-impl<'a> CatalogIterator<'a> {
-    pub(crate) fn new(catalog: &'a Catalog) -> Self {
+impl<'a> MessageIterator<'a> {
+    pub(crate) fn begin(catalog: &'a Catalog) -> Self {
         Self {
             catalog,
             next_index: 0,
@@ -20,7 +21,7 @@ impl<'a> CatalogIterator<'a> {
     }
 }
 
-impl<'a> Iterator for CatalogIterator<'a> {
+impl<'a> Iterator for MessageIterator<'a> {
     type Item = &'a dyn MessageView;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -37,18 +38,33 @@ impl<'a> Iterator for CatalogIterator<'a> {
 }
 
 /// A mutable iterator over messages in a catalog that allows mutating a message in-place.
-pub struct CatalogMutableIterator<'a> {
+pub struct MessageMutIterator<'a> {
     catalog: &'a mut Catalog,
     current_index: usize,
     next_index: usize,
 }
 
-impl<'a> CatalogMutableIterator<'a> {
-    pub(crate) fn new(catalog: &'a mut Catalog) -> Self {
+impl<'a> MessageMutIterator<'a> {
+    pub(crate) fn begin(catalog: &'a mut Catalog) -> Self {
         Self {
             catalog,
             current_index: 0,
             next_index: 0,
+        }
+    }
+
+    pub(crate) fn at(catalog: &'a mut Catalog, index: usize) -> Self {
+        Self {
+            catalog,
+            current_index: index,
+            next_index: index + 1,
+        }
+    }
+
+    fn as_mut_view(&mut self) -> &'a mut dyn CatalogMessageMutView {
+        unsafe {
+            let ptr = self as *mut MessageMutIterator<'a>;
+            &mut *ptr
         }
     }
 
@@ -59,28 +75,17 @@ impl<'a> CatalogMutableIterator<'a> {
     fn message_mut(&mut self) -> &mut Message {
         self.catalog.messages[self.current_index].as_mut().unwrap()
     }
-
-    /// Delete this message from the catalog. The message pointed by this proxy object is invalidated.
-    /// No further access to the message object pointed by this proxy object is allowed after deletion.
-    pub fn delete(&mut self) {
-        let key = MessageKey::from(self.message());
-        self.catalog.map.remove(&key);
-        self.catalog.messages[self.current_index] = None;
-    }
 }
 
-impl<'a> Iterator for CatalogMutableIterator<'a> {
-    type Item = &'a dyn MutableMessageView;
+impl<'a> Iterator for MessageMutIterator<'a> {
+    type Item = &'a mut dyn CatalogMessageMutView;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.next_index < self.catalog.messages.len() {
             if self.catalog.messages[self.next_index].is_some() {
                 self.current_index = self.next_index;
                 self.next_index += 1;
-                unsafe {
-                    let ptr = self as *mut CatalogMutableIterator<'a>;
-                    return Some(&*ptr);
-                }
+                return Some(self.as_mut_view());
             } else {
                 self.next_index += 1;
             }
@@ -89,7 +94,7 @@ impl<'a> Iterator for CatalogMutableIterator<'a> {
     }
 }
 
-impl<'a> MessageView for CatalogMutableIterator<'a> {
+impl<'a> MessageView for MessageMutIterator<'a> {
     fn is_singular(&self) -> bool {
         self.message().is_singular()
     }
@@ -100,6 +105,10 @@ impl<'a> MessageView for CatalogMutableIterator<'a> {
 
     fn is_translated(&self) -> bool {
         self.message().is_translated()
+    }
+
+    fn is_fuzzy(&self) -> bool {
+        self.message().is_fuzzy()
     }
 
     fn comments(&self) -> &str {
@@ -135,7 +144,7 @@ impl<'a> MessageView for CatalogMutableIterator<'a> {
     }
 }
 
-impl<'a> MutableMessageView for CatalogMutableIterator<'a> {
+impl<'a> MessageMutView for MessageMutIterator<'a> {
     fn comments_mut(&mut self) -> &mut String {
         &mut self.message_mut().comments
     }
@@ -199,5 +208,19 @@ impl<'a> MutableMessageView for CatalogMutableIterator<'a> {
         } else {
             Err(SingularPluralMismatchError)
         }
+    }
+}
+
+impl<'a> CatalogMessageMutView for MessageMutIterator<'a> {
+    fn delete(&mut self) {
+        let key = MessageKey::from(self.message());
+        self.catalog.map.remove(&key);
+        self.catalog.messages[self.current_index] = None;
+    }
+
+    fn detach(&mut self) -> Message {
+        let key = MessageKey::from(self.message());
+        self.catalog.map.remove(&key);
+        self.catalog.messages[self.current_index].take().unwrap()
     }
 }

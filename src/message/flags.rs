@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 /// Represents the set of flags in a message
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MessageFlags {
     /// Vector of individual flags
     pub entries: Vec<String>,
