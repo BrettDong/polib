@@ -21,8 +21,8 @@ msgstr "Translated_Hello"
 #: src/bar.c
 msgid "Book"
 msgid_plural "Books"
-msgstr[0] "Translated_Book"
+msgstr[0] "Translated\n_\nBook"
 
 #: src/bar.c
 msgid "Good"
-msgstr ""
+msgstr "\"\n\"123"

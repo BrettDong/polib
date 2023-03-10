@@ -104,42 +104,42 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
     writer.write_all(b"\nmsgid \"\"\n")?;
-    write_field(&mut writer, "msgstr", catalog.metadata.dump().as_str())?;
+    write_field(
+        &mut writer,
+        "msgstr",
+        catalog.metadata.export_for_po().as_str(),
+    )?;
     writer.write_all(b"\n")?;
-    for message in &catalog.messages {
-        if !message.comments.is_empty() {
-            for line in message.comments.split('\n') {
+    for message in catalog.messages() {
+        if !message.comments().is_empty() {
+            for line in message.comments().split('\n') {
                 writer.write_all(b"#. ")?;
                 writer.write_all(line.as_bytes())?;
                 writer.write_all(b"\n")?;
             }
         }
-        if !message.source.is_empty() {
-            for line in message.source.split('\n') {
+        if !message.source().is_empty() {
+            for line in message.source().split('\n') {
                 writer.write_all(b"#: ")?;
                 writer.write_all(line.as_bytes())?;
                 writer.write_all(b"\n")?;
             }
         }
-        if !message.flags.is_empty() {
+        if !message.flags().is_empty() {
             writer.write_all(b"#, ")?;
-            writer.write_all(message.flags.export().as_bytes())?;
+            writer.write_all(message.flags().to_string().as_bytes())?;
             writer.write_all(b"\n")?;
         }
-        if !message.msgctxt.is_empty() {
-            write_field(&mut writer, "msgctxt", &message.msgctxt)?;
+        if !message.msgctxt().is_empty() {
+            write_field(&mut writer, "msgctxt", message.msgctxt())?;
         }
         if message.is_singular() {
-            write_field(&mut writer, "msgid", message.get_msgid().unwrap())?;
-            write_field(&mut writer, "msgstr", message.get_msgstr().unwrap())?;
+            write_field(&mut writer, "msgid", message.msgid())?;
+            write_field(&mut writer, "msgstr", message.msgstr().unwrap())?;
         } else {
-            write_field(&mut writer, "msgid", message.get_msgid().unwrap())?;
-            write_field(
-                &mut writer,
-                "msgid_plural",
-                message.get_msgid_plural().unwrap(),
-            )?;
-            let plurals = message.get_msgstr_plural().unwrap();
+            write_field(&mut writer, "msgid", message.msgid())?;
+            write_field(&mut writer, "msgid_plural", message.msgid_plural().unwrap())?;
+            let plurals = message.msgstr_plural().unwrap();
             for (i, plural) in plurals.iter().enumerate() {
                 write_field(
                     &mut writer,

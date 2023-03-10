@@ -1,5 +1,5 @@
 use polib::po_file;
-use polib::po_file::po_file_parser::POParseOptions;
+use polib::po_file::POParseOptions;
 use std::env;
 use std::error::Error;
 use std::path::Path;
@@ -12,19 +12,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    let catalog = po_file::parse(Path::new(&path), &POParseOptions::default())?;
-    for message in catalog.messages {
-        if message.is_plural() {
+    let mut catalog = po_file::parse(Path::new(&path), &POParseOptions::default())?;
+    for message in catalog.messages_mut() {
+        if message.is_translated() {
             println!(
                 "{} => {}",
-                message.get_msgid().unwrap(),
-                message.get_msgstr_plural().unwrap()[0]
-            );
-        } else {
-            println!(
-                "{} => {}",
-                message.get_msgid().unwrap(),
-                message.get_msgstr().unwrap()
+                message.msgid(),
+                match message.is_plural() {
+                    true => message.msgstr_plural()?.join(", "),
+                    false => message.msgstr()?.to_string(),
+                }
             );
         }
     }

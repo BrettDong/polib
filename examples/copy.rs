@@ -1,5 +1,5 @@
 use polib::po_file;
-use polib::po_file::po_file_parser::POParseOptions;
+use polib::po_file::POParseOptions;
 use std::env;
 use std::error::Error;
 use std::path::Path;

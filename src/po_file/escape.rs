@@ -1,3 +1,24 @@
+#[derive(Debug)]
+pub(crate) struct UnescapeError {
+    seq: String,
+}
+
+impl UnescapeError {
+    fn new(seq: char) -> Self {
+        Self {
+            seq: seq.to_string(),
+        }
+    }
+}
+
+impl std::fmt::Display for UnescapeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "invalid unescape sequence {}", self.seq)
+    }
+}
+
+impl std::error::Error for UnescapeError {}
+
 pub(super) fn escape(unescaped: &str) -> String {
     if unescaped.find('\\').is_none()
         && unescaped.find('"').is_none()
@@ -33,7 +54,7 @@ pub(super) fn escape(unescaped: &str) -> String {
     escaped
 }
 
-pub(super) fn unescape(escaped: &str) -> Result<String, &str> {
+pub(super) fn unescape(escaped: &str) -> Result<String, UnescapeError> {
     let first_backslash = escaped.find('\\');
     if let Some(i) = first_backslash {
         let mut unescaped = String::from(&escaped[0..i]);
@@ -61,8 +82,7 @@ pub(super) fn unescape(escaped: &str) -> Result<String, &str> {
                         unescaped.push('"');
                     }
                     _ => {
-                        println!("==> {:?}", escaped);
-                        return Err("Bad string escape sequence");
+                        return Err(UnescapeError::new(escaped[i]));
                     }
                 }
             }
@@ -74,6 +94,7 @@ pub(super) fn unescape(escaped: &str) -> Result<String, &str> {
     }
 }
 
+#[cfg(test)]
 mod test {
     #[test]
     fn test_escape() {
