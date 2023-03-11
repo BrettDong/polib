@@ -1,6 +1,7 @@
 //! Defines `MessageKey` struct.
 
 use crate::message::{Message, MessageView};
+use concat_string::concat_string;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct MessageKey {
@@ -12,10 +13,14 @@ impl MessageKey {
         Self {
             key: match (msgctxt, msgid_plural) {
                 (Some(msgctxt), Some(msgid_plural)) => {
-                    format!("{}\u{0004}{}\u{0000}{}", msgctxt, msgid, msgid_plural)
+                    concat_string!(msgctxt, "\u{0004}", msgid, "\u{0000}", msgid_plural)
                 }
-                (Some(msgctxt), None) => format!("{}\u{0004}{}", msgctxt, msgid),
-                (None, Some(msgid_plural)) => format!("{}\u{0000}{}", msgid, msgid_plural),
+                (Some(msgctxt), None) => {
+                    concat_string!(msgctxt, "\u{0004}", msgid)
+                }
+                (None, Some(msgid_plural)) => {
+                    concat_string!(msgid, "\u{0000}", msgid_plural)
+                }
                 (None, None) => msgid.to_string(),
             },
         }

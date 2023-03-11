@@ -14,6 +14,8 @@
 
 #![warn(missing_docs)]
 
+extern crate concat_string;
+
 pub mod catalog;
 pub mod message;
 pub mod metadata;
