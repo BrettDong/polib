@@ -1,5 +1,4 @@
 use polib::po_file;
-use polib::po_file::POParseOptions;
 use std::env;
 use std::error::Error;
 use std::path::Path;
@@ -12,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    let catalog = po_file::parse(Path::new(&path), &POParseOptions::default())?;
+    let catalog = po_file::parse(Path::new(&path))?;
     for message in catalog.messages() {
         if message.is_translated() {
             println!(

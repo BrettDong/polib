@@ -1,5 +1,4 @@
-use polib::po_file::POParseOptions;
-use polib::{mo_file, po_file};
+use polib::mo_file;
 use std::env;
 use std::error::Error;
 use std::path::Path;
@@ -12,11 +11,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    let parse_options = POParseOptions {
-        message_body_only: true,
-        translated_only: true,
-    };
-    let catalog = po_file::parse(Path::new(&input), &parse_options)?;
-    mo_file::write(&catalog, Path::new(&output))?;
+    mo_file::compile_from_po(Path::new(&input), Path::new(&output))?;
     Ok(())
 }

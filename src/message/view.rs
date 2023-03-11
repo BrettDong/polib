@@ -91,9 +91,11 @@ pub trait MessageMutView: MessageView {
 /// Mutable view of a `Message` that is part of a catalog.
 pub trait CatalogMessageMutView: MessageMutView {
     /// Delete this message from the catalog.
+    /// It is undefined behavior to continue access the message object through this proxy afterwards.
     fn delete(&mut self);
 
     /// Detach this message from the catalog and get the message object back.
+    /// It is undefined behavior to continue access the message object through this proxy afterwards.
     fn detach(&mut self) -> Message;
 }
 

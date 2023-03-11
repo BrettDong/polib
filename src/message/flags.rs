@@ -48,6 +48,11 @@ impl MessageFlags {
         MessageFlags { entries: vec![] }
     }
 
+    /// Count number of flags
+    pub fn count(&self) -> usize {
+        self.entries.len()
+    }
+
     /// Is the set of flags empty?
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
@@ -62,6 +67,30 @@ impl MessageFlags {
     /// Is fuzzy flag present?
     pub fn is_fuzzy(&self) -> bool {
         self.contains("fuzzy")
+    }
+
+    /// Add a flag.
+    pub fn add_flag(&mut self, flag: &str) {
+        if !self.contains(flag) {
+            self.entries.push(flag.to_string());
+        }
+    }
+
+    /// Remove a flag.
+    pub fn remove_flag(&mut self, flag: &str) {
+        if let Some(index) = self.entries.iter().position(|x| *x == flag) {
+            self.entries.remove(index);
+        }
+    }
+
+    /// Get an immutable iterator over flags.
+    pub fn iter(&self) -> std::slice::Iter<String> {
+        self.entries.iter()
+    }
+
+    /// Get a mutable iterator over flags.
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<String> {
+        self.entries.iter_mut()
     }
 }
 

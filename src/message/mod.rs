@@ -1,4 +1,4 @@
-//! `Message` struct and associated features.
+//! Defines `Message` struct and its view traits.
 
 mod builder;
 mod flags;

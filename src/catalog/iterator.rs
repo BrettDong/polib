@@ -76,6 +76,8 @@ impl<'a> Iterator for IterMut<'a> {
 }
 
 /// Proxy object for mutating a message that belongs to a catalog.
+/// Mutating a message in a catalog has to go through this proxy object, otherwise modifying data
+/// directly on the `Message` object may cause internal data inconsistencies in the catalog.
 pub struct MessageMutProxy<'a>(CatalogMessageRef<&'a mut Catalog>);
 
 impl<'a> MessageMutProxy<'a> {

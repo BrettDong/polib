@@ -2,12 +2,11 @@
 //! GNU gettext `.po` file format. Saving translation data into `.mo` file format
 //! is also supported. For simplicity, only UTF-8 encoding is supported.
 //!
-//! _Message_ represents an entry in the translation data that maps a string
-//! or a pair strings in singular and plural forms in original language to a
-//! string or a vector of string in different singular or plural forms in
-//! target language.
+//! A _Message_ represents an entry in the translation data that maps a string
+//! or a pair of singular form and plural form strings in the original language
+//! to a string or a vector of string in different plural forms in the target language.
 //!
-//! _Catalog_ represents the set of _Messages_ stored in a `.po` or `.mo` file.
+//! A _Catalog_ holds a collection set of _Messages_, and is stored in a `.po` or `.mo` file.
 //!
 //! _Metadata_ is the "header" section of a _Catalog_ that declares its
 //! properties like target language, character encoding, translation template

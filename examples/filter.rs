@@ -1,6 +1,5 @@
 use polib::message::{CatalogMessageMutView, MessageView};
 use polib::po_file;
-use polib::po_file::POParseOptions;
 use std::env;
 use std::error::Error;
 use std::path::Path;
@@ -13,7 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(());
         }
     };
-    let mut catalog = po_file::parse(Path::new(&input_file), &POParseOptions::default())?;
+    let mut catalog = po_file::parse(Path::new(&input_file))?;
     let mut filtered: usize = 0;
     for mut message in catalog.messages_mut() {
         if !message.is_translated() || message.is_fuzzy() {

@@ -8,7 +8,7 @@ A Rust library to read, manipulate and write GNU gettext translation data in `.p
 
 ## Basic Concepts
 
-A **Message** represents a translation from a text entry in source language to a text entry in a target language. 
+A **Message** represents a translation of a text entry from the source language to a target language. 
 
 A **Catalog** holds a collection of _Messages_, and is stored in a `.po` file. 
 
@@ -18,12 +18,11 @@ A **Catalog** holds a collection of _Messages_, and is stored in a `.po` file.
 
 ```rust
 use polib::po_file;
-use polib::po_file::POParseOptions;
 use std::error::Error;
 use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let catalog = po_file::parse(Path::new("foo.po"), &POParseOptions::default())?;
+    let catalog = po_file::parse(Path::new("foo.po"))?;
     for message in catalog.messages() {
         if message.is_translated() {
             if message.is_singular() {
@@ -42,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 ### Remove untranslated or fuzzy entries and save to another `.po` file
 
 ```rust
-let mut catalog = po_file::parse(Path::new(&input_file), &POParseOptions::default())?;
+let mut catalog = po_file::parse(Path::new(&input_file))?;
 let mut filtered: usize = 0;
 for mut message in catalog.messages_mut() {
     if !message.is_translated() || message.is_fuzzy() {
@@ -54,11 +53,24 @@ po_file::write(&catalog, Path::new(&output_file))?;
 println!("{} untranslated or fuzzy translations removed.", filtered);
 ```
 
+### Fill in missing translations from some other translation service
+
+```rust
+let mut catalog = po_file::parse(Path::new(&input_file))?;
+for mut message in catalog.messages_mut() {
+    if !message.is_translated() {
+        if message.is_singular() {
+            message.set_msgstr(/* some 3rdparty provided */translate(message.msgid()))?;
+        }
+    }
+}
+po_file::write(&catalog, Path::new(&output_file))?;
+```
+
 ### Compile a `.po` file to `.mo` format
 
 ```rust
-let catalog = po_file::parse(Path::new("in.po"), &POParseOptions::default())?;
-mo_file::write(&catalog, Path::new("out.mo"))?;
+mo_file::compile_from_po(Path::new(&input), Path::new(&output))?;
 ```
 
 ## Documentation

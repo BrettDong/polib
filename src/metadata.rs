@@ -1,4 +1,4 @@
-//! `CatalogMetadata` struct and associated functions.
+//! Defines `CatalogMetadata` struct.
 
 use std::collections::HashMap;
 

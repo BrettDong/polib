@@ -1,4 +1,4 @@
-//! `Catalog` struct and associated functions.
+//! Defines `Catalog` struct and its iterators.
 
 mod iterator;
 
@@ -26,6 +26,14 @@ impl Catalog {
         }
     }
 
+    /// Create a new catalog with a given metadata.
+    pub fn new(metadata: CatalogMetadata) -> Self {
+        Self {
+            metadata,
+            ..Self::empty()
+        }
+    }
+
     /// Count number of messages in the catalog.
     pub fn count(&self) -> usize {
         self.messages().count()
@@ -46,7 +54,8 @@ impl Catalog {
         IterMut::begin(self)
     }
 
-    /// Find a message in the catalog by msgctxt, msgid and msgid_plural fields.
+    /// Find a message in the catalog by msgctxt, msgid and msgid_plural fields. All three fields
+    /// have to fully match. Returns None if the message is not found.
     pub fn find_message(
         &self,
         msgctxt: Option<&str>,
@@ -62,6 +71,7 @@ impl Catalog {
     }
 
     /// Find a message in the catalog by msgctxt, msgid and msgid_plural fields and get a mutable view.
+    /// All three fields have to fully match. Returns None if the message is not found.
     pub fn find_message_mut(
         &mut self,
         msgctxt: Option<&str>,
@@ -76,8 +86,9 @@ impl Catalog {
         }
     }
 
-    /// Delete a message from the catalog by msgctxt, msgid and msgid_plural fields. Returns true
-    /// if the message is found and deleted. Returns false if the message does not exist in the catalog.
+    /// Delete a message from the catalog by msgctxt, msgid and msgid_plural fields. All three fields
+    /// have to fully match. Returns true if the message is found and deleted. Returns false
+    /// if the message does not exist in the catalog.
     pub fn delete_message(
         &mut self,
         msgctxt: Option<&str>,
@@ -105,7 +116,7 @@ impl Catalog {
     }
 
     /// Append a new message to the end of the catalog.
-    /// If a message with the exact same `msgctxt`, `msgid` and `msgid_plural` field already exists
+    /// If a message with the exact same `msgctxt`, `msgid` and `msgid_plural` fields already exists
     /// in the catalog, then that message is replaced instead.
     pub fn append_or_update(&mut self, m: Message) {
         let key = MessageKey::from(&m);

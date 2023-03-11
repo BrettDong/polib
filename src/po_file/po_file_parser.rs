@@ -18,6 +18,8 @@ pub struct POParseOptions {
     pub message_body_only: bool,
     /// If true, skip parsing untranslated messages.
     pub translated_only: bool,
+    /// If true, decode UTF-8 unsafely without checks.
+    pub unsafe_utf8_decode: bool,
 }
 
 impl POParseOptions {
@@ -280,15 +282,18 @@ impl POParserState {
     }
 }
 
-/// Parse the PO file and returns a catalog on success.
-pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, POParseError> {
+/// Parse a PO file with custom parse options and returns a catalog on success.
+pub fn parse_with_option(path: &Path, options: &POParseOptions) -> Result<Catalog, POParseError> {
     let file = std::fs::File::open(path)?;
     let mut parser = POParserState::new(options);
     let mut reader = LineReader::new(file);
     while let Some(line) = reader.next_line() {
         let line = line?;
-        //let mut line = unsafe { std::str::from_utf8_unchecked(line) };
-        let mut line = std::str::from_utf8(line)?;
+        let mut line = if options.unsafe_utf8_decode {
+            unsafe { std::str::from_utf8_unchecked(line) }
+        } else {
+            std::str::from_utf8(line)?
+        };
         if line.ends_with('\n') {
             line = &line[0..line.len() - 1];
         }
@@ -299,4 +304,9 @@ pub fn parse(path: &Path, options: &POParseOptions) -> Result<Catalog, POParseEr
     }
     parser.consume_line("")?;
     Ok(parser.catalog)
+}
+
+/// Parse a PO file and returns a catalog on success.
+pub fn parse(path: &Path) -> Result<Catalog, POParseError> {
+    parse_with_option(path, &POParseOptions::default())
 }
