@@ -6,7 +6,7 @@ use crate::{
     message::CatalogMessageMutView, message::Message, message::MessageKey, message::MessageView,
     metadata::CatalogMetadata,
 };
-pub use iterator::{MessageIterator, MessageMutIterator};
+pub use iterator::{Iter, IterMut, MessageMutProxy};
 use std::collections::btree_map::BTreeMap;
 
 /// `Catalog` struct represents a collection of _Messages_ stored in a `.po` or `.mo` file.
@@ -37,13 +37,13 @@ impl Catalog {
     }
 
     /// Get an iterator over immutable messages in the catalog.
-    pub fn messages(&self) -> MessageIterator {
-        MessageIterator::begin(self)
+    pub fn messages(&self) -> Iter {
+        Iter::begin(self)
     }
 
     /// Get an iterator over messages in the catalog that allows mutating a message in-place.
-    pub fn messages_mut(&mut self) -> MessageMutIterator {
-        MessageMutIterator::begin(self)
+    pub fn messages_mut(&mut self) -> IterMut {
+        IterMut::begin(self)
     }
 
     /// Find a message in the catalog by msgctxt, msgid and msgid_plural fields.
@@ -67,10 +67,10 @@ impl Catalog {
         msgctxt: Option<&str>,
         msgid: &str,
         msgid_plural: Option<&str>,
-    ) -> Option<impl CatalogMessageMutView + '_> {
+    ) -> Option<MessageMutProxy> {
         let key = MessageKey::gen(msgctxt, msgid, msgid_plural);
         if let Some(&index) = self.map.get(&key) {
-            Some(MessageMutIterator::at(self, index))
+            Some(MessageMutProxy::at(self, index))
         } else {
             None
         }

@@ -39,19 +39,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 ```
 
-### Remove fuzzy entries and save to another `.po` file
+### Remove untranslated or fuzzy entries and save to another `.po` file
 
 ```rust
-let mut catalog = po_file::parse(Path::new("in.po"), &POParseOptions::default())?;
+let mut catalog = po_file::parse(Path::new(&input_file), &POParseOptions::default())?;
 let mut filtered: usize = 0;
-for message in catalog.messages_mut() {
-    if message.is_fuzzy() {
+for mut message in catalog.messages_mut() {
+    if !message.is_translated() || message.is_fuzzy() {
         message.delete();
         filtered += 1;
     }
 }
-println!("{} fuzzy message(s) removed.", filtered);
-po_file::write(&catalog, Path::new("out.po"))?;
+po_file::write(&catalog, Path::new(&output_file))?;
+println!("{} untranslated or fuzzy translations removed.", filtered);
 ```
 
 ### Compile a `.po` file to `.mo` format
