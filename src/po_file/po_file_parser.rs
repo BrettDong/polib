@@ -8,6 +8,7 @@ use crate::message::*;
 use crate::metadata::{CatalogMetadata, MetadataParseError};
 use crate::po_file::escape::UnescapeError;
 use linereader::LineReader;
+use std::io::Read;
 use std::path::Path;
 use std::str::{FromStr, Utf8Error};
 
@@ -283,10 +284,12 @@ impl POParserState {
 }
 
 /// Parse a PO file with custom parse options and returns a catalog on success.
-pub fn parse_with_option(path: &Path, options: &POParseOptions) -> Result<Catalog, POParseError> {
-    let file = std::fs::File::open(path)?;
+pub fn parse_from_reader_with_option<R: Read>(
+    read: R,
+    options: &POParseOptions,
+) -> Result<Catalog, POParseError> {
     let mut parser = POParserState::new(options);
-    let mut reader = LineReader::new(file);
+    let mut reader = LineReader::new(read);
     while let Some(line) = reader.next_line() {
         let line = line?;
         let mut line = if options.unsafe_utf8_decode {
@@ -304,6 +307,17 @@ pub fn parse_with_option(path: &Path, options: &POParseOptions) -> Result<Catalo
     }
     parser.consume_line("")?;
     Ok(parser.catalog)
+}
+
+/// Parse a PO file and returns a catalog on success.
+pub fn parse_from_reader<R: Read>(read: R) -> Result<Catalog, POParseError> {
+    parse_from_reader_with_option(read, &POParseOptions::default())
+}
+
+/// Parse a PO file with custom parse options and returns a catalog on success.
+pub fn parse_with_option(path: &Path, options: &POParseOptions) -> Result<Catalog, POParseError> {
+    let file = std::fs::File::open(path)?;
+    parse_from_reader_with_option(file, options)
 }
 
 /// Parse a PO file and returns a catalog on success.
