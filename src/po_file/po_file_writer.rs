@@ -130,8 +130,8 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
             writer.write_all(message.flags().to_string().as_bytes())?;
             writer.write_all(b"\n")?;
         }
-        if !message.msgctxt().is_empty() {
-            write_field(&mut writer, "msgctxt", message.msgctxt())?;
+        if let Some(ctxt) = message.msgctxt() {
+            write_field(&mut writer, "msgctxt", ctxt)?;
         }
         if message.is_singular() {
             write_field(&mut writer, "msgid", message.msgid())?;

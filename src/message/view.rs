@@ -42,7 +42,7 @@ pub trait MessageView {
     fn flags(&self) -> &MessageFlags;
 
     /// Get context field of the message.
-    fn msgctxt(&self) -> &str;
+    fn msgctxt(&self) -> Option<&str>;
 
     /// Get msgid field of the message.
     fn msgid(&self) -> &str;
@@ -132,8 +132,12 @@ impl MessageView for Message {
         &self.flags
     }
 
-    fn msgctxt(&self) -> &str {
-        &self.msgctxt
+    fn msgctxt(&self) -> Option<&str> {
+        if self.msgctxt.is_empty() {
+            None
+        } else {
+            Some(&self.msgctxt)
+        }
     }
 
     fn msgid(&self) -> &str {
@@ -239,7 +243,7 @@ impl ToOwned for dyn MessageView {
                 comments: self.comments().to_string(),
                 source: self.source().to_string(),
                 flags: self.flags().clone(),
-                msgctxt: self.msgctxt().to_string(),
+                msgctxt: self.msgctxt().unwrap_or("").to_string(),
                 msgid: self.msgid().to_string(),
                 msgid_plural: String::default(),
                 msgstr: self.msgstr().unwrap().to_string(),
@@ -251,7 +255,7 @@ impl ToOwned for dyn MessageView {
                 comments: self.comments().to_string(),
                 source: self.source().to_string(),
                 flags: self.flags().clone(),
-                msgctxt: self.msgctxt().to_string(),
+                msgctxt: self.msgctxt().unwrap_or("").to_string(),
                 msgid: self.msgid().to_string(),
                 msgid_plural: self.msgid_plural().unwrap().to_string(),
                 msgstr: String::default(),

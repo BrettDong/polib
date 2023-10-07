@@ -10,8 +10,7 @@ use crate::{catalog::Catalog, message::MessageView};
 
 fn original_repr_len(message: &dyn MessageView) -> usize {
     let mut result = 0usize;
-    let ctxt = message.msgctxt();
-    if !ctxt.is_empty() {
+    if let Some(ctxt) = message.msgctxt() {
         result += ctxt.len() + 1;
     }
     result += message.msgid().len();
@@ -25,8 +24,7 @@ fn write_original_repr(
     writer: &mut BufWriter<std::fs::File>,
     message: &dyn MessageView,
 ) -> Result<(), std::io::Error> {
-    let ctxt = message.msgctxt();
-    if !ctxt.is_empty() {
+    if let Some(ctxt) = message.msgctxt() {
         writer.write_all(ctxt.as_bytes())?;
         writer.write_all(&[4u8])?;
     }

@@ -123,7 +123,7 @@ impl<'a> MessageView for MessageMutProxy<'a> {
         self.message().flags()
     }
 
-    fn msgctxt(&self) -> &str {
+    fn msgctxt(&self) -> Option<&str> {
         self.message().msgctxt()
     }
 
