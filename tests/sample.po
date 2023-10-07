@@ -24,5 +24,10 @@ msgid_plural "Books"
 msgstr[0] "Translated\n_\nBook"
 
 #: src/bar.c
+msgctxt "Context"
 msgid "Good"
 msgstr "\"\n\"123"
+
+#: src/foo.c
+msgid "Untranslated"
+msgstr ""
