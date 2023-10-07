@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             filtered += 1;
         }
     }
-    po_file::write(&catalog, Path::new(&output_file))?;
+    po_file::write_to_file(&catalog, Path::new(&output_file))?;
     println!("{} untranslated or fuzzy translations removed.", filtered);
     Ok(())
 }
