@@ -70,8 +70,8 @@ fn wrap(content: &str) -> Vec<String> {
 }
 */
 
-fn write_field(
-    writer: &mut BufWriter<std::fs::File>,
+fn write_field<W: Write>(
+    writer: &mut BufWriter<W>,
     field_name: &str,
     content: &str,
 ) -> Result<(), std::io::Error> {
@@ -99,16 +99,10 @@ fn write_field(
     Ok(())
 }
 
-/// Saves a catalog to a PO file on the disk.
-pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
-    let file = File::create(path)?;
-    let mut writer = BufWriter::new(file);
+/// Writes a catalog in PO format.
+pub fn write<W: Write>(catalog: &Catalog, writer: &mut BufWriter<W>) -> Result<(), std::io::Error> {
     writer.write_all(b"\nmsgid \"\"\n")?;
-    write_field(
-        &mut writer,
-        "msgstr",
-        catalog.metadata.export_for_po().as_str(),
-    )?;
+    write_field(writer, "msgstr", catalog.metadata.export_for_po().as_str())?;
     writer.write_all(b"\n")?;
     for message in catalog.messages() {
         if !message.comments().is_empty() {
@@ -131,25 +125,28 @@ pub fn write(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
             writer.write_all(b"\n")?;
         }
         if let Some(ctxt) = message.msgctxt() {
-            write_field(&mut writer, "msgctxt", ctxt)?;
+            write_field(writer, "msgctxt", ctxt)?;
         }
         if message.is_singular() {
-            write_field(&mut writer, "msgid", message.msgid())?;
-            write_field(&mut writer, "msgstr", message.msgstr().unwrap())?;
+            write_field(writer, "msgid", message.msgid())?;
+            write_field(writer, "msgstr", message.msgstr().unwrap())?;
         } else {
-            write_field(&mut writer, "msgid", message.msgid())?;
-            write_field(&mut writer, "msgid_plural", message.msgid_plural().unwrap())?;
+            write_field(writer, "msgid", message.msgid())?;
+            write_field(writer, "msgid_plural", message.msgid_plural().unwrap())?;
             let plurals = message.msgstr_plural().unwrap();
             for (i, plural) in plurals.iter().enumerate() {
-                write_field(
-                    &mut writer,
-                    format!("msgstr[{}]", i).as_str(),
-                    plural.as_str(),
-                )?;
+                write_field(writer, format!("msgstr[{}]", i).as_str(), plural.as_str())?;
             }
         }
         writer.write_all(b"\n")?;
     }
     writer.flush()?;
     Ok(())
+}
+
+/// Writes a catalog to a PO file on disk.
+pub fn write_to_file(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
+    let file = File::create(path)?;
+    let mut writer = BufWriter::new(file);
+    write(catalog, &mut writer)
 }

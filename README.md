@@ -49,7 +49,7 @@ for mut message in catalog.messages_mut() {
         filtered += 1;
     }
 }
-po_file::write(&catalog, Path::new(&output_file))?;
+po_file::write_to_file(&catalog, Path::new(&output_file))?;
 println!("{} untranslated or fuzzy translations removed.", filtered);
 ```
 
@@ -64,7 +64,7 @@ for mut message in catalog.messages_mut() {
         }
     }
 }
-po_file::write(&catalog, Path::new(&output_file))?;
+po_file::write_to_file(&catalog, Path::new(&output_file))?;
 ```
 
 ### Compile a `.po` file to `.mo` format

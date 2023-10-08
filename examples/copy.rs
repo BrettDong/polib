@@ -12,6 +12,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
     let catalog = po_file::parse(Path::new(&input))?;
-    po_file::write(&catalog, Path::new(&output))?;
+    po_file::write_to_file(&catalog, Path::new(&output))?;
     Ok(())
 }
