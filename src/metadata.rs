@@ -66,19 +66,28 @@ impl CatalogMetadata {
             }
         }
         let res = CatalogMetadata {
-            project_id_version: key_values.get("Project-Id-Version").unwrap().to_string(),
-            pot_creation_date: key_values.get("POT-Creation-Date").unwrap().to_string(),
-            po_revision_date: key_values.get("PO-Revision-Date").unwrap().to_string(),
+            project_id_version: key_values
+                .get("Project-Id-Version")
+                .unwrap_or(&"")
+                .to_string(),
+            pot_creation_date: key_values
+                .get("POT-Creation-Date")
+                .unwrap_or(&"")
+                .to_string(),
+            po_revision_date: key_values
+                .get("PO-Revision-Date")
+                .unwrap_or(&"")
+                .to_string(),
             last_translator: key_values.get("Last-Translator").unwrap_or(&"").to_string(),
-            language_team: key_values.get("Language-Team").unwrap().to_string(),
-            mime_version: key_values.get("MIME-Version").unwrap().to_string(),
-            content_type: key_values.get("Content-Type").unwrap().to_string(),
+            language_team: key_values.get("Language-Team").unwrap_or(&"").to_string(),
+            mime_version: key_values.get("MIME-Version").unwrap_or(&"").to_string(),
+            content_type: key_values.get("Content-Type").unwrap_or(&"").to_string(),
             content_transfer_encoding: key_values
                 .get("Content-Transfer-Encoding")
-                .unwrap()
+                .unwrap_or(&"")
                 .to_string(),
-            language: key_values.get("Language").unwrap().to_string(),
-            plural_rules: CatalogPluralRules::parse(key_values.get("Plural-Forms").unwrap())?,
+            language: key_values.get("Language").unwrap_or(&"").to_string(),
+            plural_rules: CatalogPluralRules::parse(key_values.get("Plural-Forms").unwrap_or(&""))?,
         };
         Ok(res)
     }
