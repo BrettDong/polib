@@ -66,42 +66,67 @@ impl CatalogMetadata {
             }
         }
         let res = CatalogMetadata {
-            project_id_version: key_values.get("Project-Id-Version").unwrap().to_string(),
-            pot_creation_date: key_values.get("POT-Creation-Date").unwrap().to_string(),
-            po_revision_date: key_values.get("PO-Revision-Date").unwrap().to_string(),
+            project_id_version: key_values
+                .get("Project-Id-Version")
+                .unwrap_or(&"")
+                .to_string(),
+            pot_creation_date: key_values
+                .get("POT-Creation-Date")
+                .unwrap_or(&"")
+                .to_string(),
+            po_revision_date: key_values
+                .get("PO-Revision-Date")
+                .unwrap_or(&"")
+                .to_string(),
             last_translator: key_values.get("Last-Translator").unwrap_or(&"").to_string(),
-            language_team: key_values.get("Language-Team").unwrap().to_string(),
-            mime_version: key_values.get("MIME-Version").unwrap().to_string(),
-            content_type: key_values.get("Content-Type").unwrap().to_string(),
+            language_team: key_values.get("Language-Team").unwrap_or(&"").to_string(),
+            mime_version: key_values.get("MIME-Version").unwrap_or(&"").to_string(),
+            content_type: key_values.get("Content-Type").unwrap_or(&"").to_string(),
             content_transfer_encoding: key_values
                 .get("Content-Transfer-Encoding")
-                .unwrap()
+                .unwrap_or(&"")
                 .to_string(),
-            language: key_values.get("Language").unwrap().to_string(),
-            plural_rules: CatalogPluralRules::parse(key_values.get("Plural-Forms").unwrap())?,
+            language: key_values.get("Language").unwrap_or(&"").to_string(),
+            plural_rules: CatalogPluralRules::parse(key_values.get("Plural-Forms").unwrap_or(&""))?,
         };
         Ok(res)
     }
 
     fn dump(&self, include_pot_creation_date: bool) -> String {
         let mut buffer = String::new();
-        buffer.push_str(format!("Project-Id-Version: {}\n", self.project_id_version).as_str());
-        if include_pot_creation_date {
+        if !self.project_id_version.is_empty() {
+            buffer.push_str(format!("Project-Id-Version: {}\n", self.project_id_version).as_str());
+        }
+        if include_pot_creation_date && !self.pot_creation_date.is_empty() {
             buffer.push_str(format!("POT-Creation-Date: {}\n", self.pot_creation_date).as_str());
         }
-        buffer.push_str(format!("PO-Revision-Date: {}\n", self.po_revision_date).as_str());
-        buffer.push_str(format!("Last-Translator: {}\n", self.last_translator).as_str());
-        buffer.push_str(format!("Language-Team: {}\n", self.language_team).as_str());
-        buffer.push_str(format!("MIME-Version: {}\n", self.mime_version).as_str());
-        buffer.push_str(format!("Content-Type: {}\n", self.content_type).as_str());
-        buffer.push_str(
-            format!(
-                "Content-Transfer-Encoding: {}\n",
-                self.content_transfer_encoding
-            )
-            .as_str(),
-        );
-        buffer.push_str(format!("Language: {}\n", self.language).as_str());
+        if !self.po_revision_date.is_empty() {
+            buffer.push_str(format!("PO-Revision-Date: {}\n", self.po_revision_date).as_str());
+        }
+        if !self.last_translator.is_empty() {
+            buffer.push_str(format!("Last-Translator: {}\n", self.last_translator).as_str());
+        }
+        if !self.language_team.is_empty() {
+            buffer.push_str(format!("Language-Team: {}\n", self.language_team).as_str());
+        }
+        if !self.mime_version.is_empty() {
+            buffer.push_str(format!("MIME-Version: {}\n", self.mime_version).as_str());
+        }
+        if !self.content_type.is_empty() {
+            buffer.push_str(format!("Content-Type: {}\n", self.content_type).as_str());
+        }
+        if !self.content_transfer_encoding.is_empty() {
+            buffer.push_str(
+                format!(
+                    "Content-Transfer-Encoding: {}\n",
+                    self.content_transfer_encoding
+                )
+                .as_str(),
+            );
+        }
+        if !self.language.is_empty() {
+            buffer.push_str(format!("Language: {}\n", self.language).as_str());
+        }
         buffer.push_str(format!("Plural-Forms: {}\n", self.plural_rules.dump()).as_str());
         buffer
     }
@@ -114,5 +139,35 @@ impl CatalogMetadata {
     /// Export metadata for writing to a MO file.
     pub fn export_for_mo(&self) -> String {
         self.dump(false)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_metadata_parse() {
+        let input_data = "Plural-Forms: nplurals=1; plural=0;\n";
+        let res = CatalogMetadata::parse(input_data);
+        let catalog_metadata = res.unwrap();
+        assert_eq!(catalog_metadata.project_id_version, "");
+        assert_eq!(catalog_metadata.pot_creation_date, "");
+        assert_eq!(catalog_metadata.po_revision_date, "");
+        assert_eq!(catalog_metadata.last_translator, "");
+        assert_eq!(catalog_metadata.language_team, "");
+        assert_eq!(catalog_metadata.mime_version, "");
+        assert_eq!(catalog_metadata.content_type, "");
+        assert_eq!(catalog_metadata.content_transfer_encoding, "");
+        assert_eq!(catalog_metadata.language, "");
+    }
+
+    #[test]
+    fn test_metadata_dump() {
+        let input_data = "Plural-Forms: nplurals=1; plural=0;\n";
+        let res = CatalogMetadata::parse(input_data);
+        let catalog_metadata = res.unwrap();
+        let dump_res = catalog_metadata.dump(true);
+        assert_eq!(dump_res, input_data);
     }
 }
