@@ -5,6 +5,7 @@ use crate::message::{
     CatalogMessageMutView, Message, MessageFlags, MessageKey, MessageMutView, MessageView,
     SingularPluralMismatchError,
 };
+use std::fmt::{self, Debug, Formatter};
 
 pub struct CatalogMessageRef<C> {
     catalog: C,
@@ -91,6 +92,12 @@ impl<'a> MessageMutProxy<'a> {
 
     fn message_mut(&mut self) -> &mut Message {
         self.0.catalog.messages[self.0.index].as_mut().unwrap()
+    }
+}
+
+impl<'a> Debug for MessageMutProxy<'a> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        self.message().fmt(f)
     }
 }
 
