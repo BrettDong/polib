@@ -7,7 +7,7 @@ use std::fmt::{Display, Formatter};
 use crate::message::{Message, MessageFlags};
 
 /// Error type when trying to access a field that is not applicable to the plural type of the message.
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SingularPluralMismatchError;
 
 impl Display for SingularPluralMismatchError {

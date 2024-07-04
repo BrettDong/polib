@@ -11,7 +11,7 @@ pub(crate) use key::MessageKey;
 pub use view::{CatalogMessageMutView, MessageMutView, MessageView, SingularPluralMismatchError};
 
 /// Represents a single message entry.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Message {
     /// Developer comments of the message.
     pub(crate) comments: String,
