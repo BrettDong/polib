@@ -1,4 +1,5 @@
 /// The plural form resolution rule of the target language.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CatalogPluralRules {
     /// Total number of plural forms, including singular form.
     pub nplurals: usize,
@@ -16,7 +17,7 @@ impl Default for CatalogPluralRules {
 }
 
 /// Error type when parsing an invalid plural rules.
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PluralRulesError {
     message: String,
 }

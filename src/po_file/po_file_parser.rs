@@ -13,7 +13,7 @@ use std::path::Path;
 use std::str::{FromStr, Utf8Error};
 
 /// PO file parse options.
-#[derive(Clone, Copy, Default)]
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct POParseOptions {
     /// If true, only parse msgctxt, msgid and msgstr.
     pub message_body_only: bool,
@@ -31,7 +31,7 @@ impl POParseOptions {
 }
 
 /// Error in parsing a PO file
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct POParseError {
     message: String,
 }

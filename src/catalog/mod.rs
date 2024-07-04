@@ -10,6 +10,7 @@ pub use iterator::{Iter, IterMut, MessageMutProxy};
 use std::collections::btree_map::BTreeMap;
 
 /// `Catalog` struct represents a collection of _Messages_ stored in a `.po` or `.mo` file.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Catalog {
     /// Metadata of the catalog.
     pub metadata: CatalogMetadata,

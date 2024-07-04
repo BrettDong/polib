@@ -1,6 +1,7 @@
 use crate::message::{Message, MessageFlags};
 
 /// A helper type to build a `Message` conveniently via method chaining.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MessageBuilder {
     m: Message,
 }

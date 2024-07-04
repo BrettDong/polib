@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::plural::*;
 
 /// Metadata of a translation catalog.
-#[derive(Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct CatalogMetadata {
     /// `Project-Id-Version`
     pub project_id_version: String,
@@ -30,7 +30,7 @@ pub struct CatalogMetadata {
 }
 
 /// Error in parsing metadata of a catalog
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MetadataParseError {
     message: String,
 }

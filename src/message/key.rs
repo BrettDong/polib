@@ -3,7 +3,7 @@
 use crate::message::{Message, MessageView};
 use concat_string::concat_string;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct MessageKey {
     key: String,
 }
