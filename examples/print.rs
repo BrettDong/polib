@@ -1,3 +1,4 @@
+use polib::message::MessageView;
 use polib::po_file;
 use std::env;
 use std::error::Error;
