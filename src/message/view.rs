@@ -2,7 +2,7 @@
 
 use std::borrow::{Borrow, ToOwned};
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 use crate::message::{Message, MessageFlags};
 
@@ -19,7 +19,7 @@ impl Display for SingularPluralMismatchError {
 impl Error for SingularPluralMismatchError {}
 
 /// Immutable view of a `Message`.
-pub trait MessageView {
+pub trait MessageView: Debug {
     /// Is this message singular?
     fn is_singular(&self) -> bool;
 
