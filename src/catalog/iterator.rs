@@ -32,7 +32,7 @@ impl<'a> Iter<'a> {
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = &'a dyn MessageView;
+    type Item = &'a Message;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.0.index < self.0.catalog.messages.len() {

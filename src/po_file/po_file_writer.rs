@@ -1,7 +1,7 @@
 //! Write PO files.
 
 use super::escape::escape;
-use crate::catalog::Catalog;
+use crate::{catalog::Catalog, message::MessageView};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;

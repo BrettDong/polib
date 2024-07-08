@@ -3,7 +3,7 @@
 mod iterator;
 
 use crate::{
-    message::CatalogMessageMutView, message::Message, message::MessageKey, message::MessageView,
+    message::CatalogMessageMutView, message::Message, message::MessageKey,
     metadata::CatalogMetadata,
 };
 pub use iterator::{Iter, IterMut, MessageMutProxy};
@@ -62,7 +62,7 @@ impl Catalog {
         msgctxt: Option<&str>,
         msgid: &str,
         msgid_plural: Option<&str>,
-    ) -> Option<&dyn MessageView> {
+    ) -> Option<&Message> {
         let key = MessageKey::gen(msgctxt, msgid, msgid_plural);
         if let Some(&index) = self.map.get(&key) {
             Some(self.messages[index].as_ref().unwrap())
