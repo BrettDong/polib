@@ -62,3 +62,15 @@ fn po_round_trip() {
     let catalog_2 = po_file::parse_from_reader(&*po_bytes).unwrap();
     validate_catalog(&catalog_2);
 }
+
+#[test]
+fn po_round_trip_sort() {
+    let catalog = po_file::parse_from_reader(&*feed_test_po()).unwrap();
+    let mut writer = std::io::BufWriter::new(Vec::new());
+    po_file::write_sort_by(&catalog, &mut writer, Box::new(|a, b| {
+        a.source().cmp(b.source())
+    })).unwrap();
+    let po_bytes = writer.into_inner().unwrap();
+    let catalog_2 = po_file::parse_from_reader(&*po_bytes).unwrap();
+    validate_catalog(&catalog_2);
+}
