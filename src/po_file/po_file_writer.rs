@@ -2,6 +2,8 @@
 
 use super::escape::escape;
 use crate::catalog::Catalog;
+use crate::message::MessageView;
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
@@ -99,12 +101,24 @@ fn write_field<W: Write>(
     Ok(())
 }
 
-/// Writes a catalog in PO format.
-pub fn write<W: Write>(catalog: &Catalog, writer: &mut BufWriter<W>) -> Result<(), std::io::Error> {
+fn write_internal<W: Write>(
+    catalog: &Catalog,
+    writer: &mut BufWriter<W>,
+    comparator: Option<Box<dyn FnMut(&&dyn MessageView, &&dyn MessageView) -> Ordering>>,
+) -> Result<(), std::io::Error> {
     writer.write_all(b"\nmsgid \"\"\n")?;
     write_field(writer, "msgstr", catalog.metadata.export_for_po().as_str())?;
     writer.write_all(b"\n")?;
-    for message in catalog.messages() {
+
+    let messages = if let Some(comparator) = comparator {
+        let mut sorting = catalog.messages().collect::<Vec<&dyn MessageView>>();
+        sorting.sort_by(comparator);
+        sorting
+    } else {
+        catalog.messages().collect::<Vec<&dyn MessageView>>()
+    };
+
+    for message in messages {
         if !message.comments().is_empty() {
             for line in message.comments().split('\n') {
                 writer.write_all(b"#. ")?;
@@ -144,9 +158,35 @@ pub fn write<W: Write>(catalog: &Catalog, writer: &mut BufWriter<W>) -> Result<(
     Ok(())
 }
 
+/// Writes a catalog in PO format.
+pub fn write<W: Write>(catalog: &Catalog, writer: &mut BufWriter<W>) -> Result<(), std::io::Error> {
+    write_internal(catalog, writer, None)
+}
+
 /// Writes a catalog to a PO file on disk.
 pub fn write_to_file(catalog: &Catalog, path: &Path) -> Result<(), std::io::Error> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
-    write(catalog, &mut writer)
+    write_internal(catalog, &mut writer, None)
+}
+
+/// Writes a catalog in PO format with a sorting algorithm.
+pub fn write_sort_by<W: Write>(
+    catalog: &Catalog,
+    writer: &mut BufWriter<W>,
+    comparator: Box<dyn FnMut(&&dyn MessageView, &&dyn MessageView) -> Ordering>,
+) -> Result<(), std::io::Error> {
+    write_internal(catalog, writer, Some(comparator))
+}
+
+
+/// Writes a catalog to a PO file on disk with a sorting algorithm.
+pub fn write_to_file_sort_by(
+    catalog: &Catalog,
+    path: &Path,
+    comparator: Box<dyn FnMut(&&dyn MessageView, &&dyn MessageView) -> Ordering>,
+) -> Result<(), std::io::Error> {
+    let file = File::create(path)?;
+    let mut writer = BufWriter::new(file);
+    write_internal(catalog, &mut writer, Some(comparator))
 }
