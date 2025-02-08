@@ -87,7 +87,11 @@ impl CatalogMetadata {
                 .unwrap_or(&"")
                 .to_string(),
             language: key_values.get("Language").unwrap_or(&"").to_string(),
-            plural_rules: CatalogPluralRules::parse(key_values.get("Plural-Forms").unwrap_or(&""))?,
+            plural_rules: CatalogPluralRules::parse(
+                key_values
+                    .get("Plural-Forms")
+                    .unwrap_or(&"nplurals=1; plural=0;"),
+            )?,
         };
         Ok(res)
     }
