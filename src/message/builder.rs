@@ -29,9 +29,15 @@ impl Message {
 }
 
 impl MessageBuilder {
-    /// Set the comments field.
-    pub fn with_comments(&mut self, comments: String) -> &mut Self {
-        self.m.comments = comments;
+    /// Set the translator comments field.
+    pub fn with_translator_comments(&mut self, comments: String) -> &mut Self {
+        self.m.translator_comments = comments;
+        self
+    }
+
+    /// Set the extracted comments field.
+    pub fn with_extracted_comments(&mut self, comments: String) -> &mut Self {
+        self.m.extracted_comments = comments;
         self
     }
 

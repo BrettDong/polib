@@ -118,8 +118,12 @@ impl<'a> MessageView for MessageMutProxy<'a> {
         self.message().is_fuzzy()
     }
 
-    fn comments(&self) -> &str {
-        self.message().comments()
+    fn translator_comments(&self) -> &str {
+        self.message().translator_comments()
+    }
+
+    fn extracted_comments(&self) -> &str {
+        self.message().extracted_comments()
     }
 
     fn source(&self) -> &str {
@@ -152,8 +156,12 @@ impl<'a> MessageView for MessageMutProxy<'a> {
 }
 
 impl<'a> MessageMutView for MessageMutProxy<'a> {
-    fn comments_mut(&mut self) -> &mut String {
-        &mut self.message_mut().comments
+    fn translator_comments_mut(&mut self) -> &mut String {
+        &mut self.message_mut().translator_comments
+    }
+
+    fn extracted_comments_mut(&mut self) -> &mut String {
+        &mut self.message_mut().extracted_comments
     }
 
     fn source_mut(&mut self) -> &mut String {

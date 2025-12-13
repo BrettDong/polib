@@ -32,8 +32,11 @@ pub trait MessageView: Debug {
     /// Is this message fuzzy?
     fn is_fuzzy(&self) -> bool;
 
-    /// Get comments field of the message.
-    fn comments(&self) -> &str;
+    /// Get translator comments field of the message.
+    fn translator_comments(&self) -> &str;
+
+    /// Get extracted comments field of the message.
+    fn extracted_comments(&self) -> &str;
 
     /// Get source code location field of the message.
     fn source(&self) -> &str;
@@ -59,8 +62,11 @@ pub trait MessageView: Debug {
 
 /// Mutable view of a `Message`.
 pub trait MessageMutView: MessageView {
-    /// Get a mutable reference to the comments field of the message.
-    fn comments_mut(&mut self) -> &mut String;
+    /// Get a mutable reference to the translator comments field of the message.
+    fn translator_comments_mut(&mut self) -> &mut String;
+
+    /// Get a mutable reference to the extracted comments field of the message.
+    fn extracted_comments_mut(&mut self) -> &mut String;
 
     /// Get a mutable reference to the source code location field of the message.
     fn source_mut(&mut self) -> &mut String;
@@ -120,8 +126,12 @@ impl MessageView for Message {
         self.flags.is_fuzzy()
     }
 
-    fn comments(&self) -> &str {
-        &self.comments
+    fn translator_comments(&self) -> &str {
+        &self.translator_comments
+    }
+
+    fn extracted_comments(&self) -> &str {
+        &self.extracted_comments
     }
 
     fn source(&self) -> &str {
@@ -170,8 +180,12 @@ impl MessageView for Message {
 }
 
 impl MessageMutView for Message {
-    fn comments_mut(&mut self) -> &mut String {
-        &mut self.comments
+    fn translator_comments_mut(&mut self) -> &mut String {
+        &mut self.translator_comments
+    }
+
+    fn extracted_comments_mut(&mut self) -> &mut String {
+        &mut self.extracted_comments
     }
 
     fn source_mut(&mut self) -> &mut String {
@@ -240,7 +254,8 @@ impl ToOwned for dyn MessageView {
     fn to_owned(&self) -> Self::Owned {
         if self.is_singular() {
             Self::Owned {
-                comments: self.comments().to_string(),
+                translator_comments: self.translator_comments().to_string(),
+                extracted_comments: self.extracted_comments().to_string(),
                 source: self.source().to_string(),
                 flags: self.flags().clone(),
                 msgctxt: self.msgctxt().unwrap_or("").to_string(),
@@ -252,7 +267,8 @@ impl ToOwned for dyn MessageView {
             }
         } else {
             Self::Owned {
-                comments: self.comments().to_string(),
+                translator_comments: self.translator_comments().to_string(),
+                extracted_comments: self.extracted_comments().to_string(),
                 source: self.source().to_string(),
                 flags: self.flags().clone(),
                 msgctxt: self.msgctxt().unwrap_or("").to_string(),

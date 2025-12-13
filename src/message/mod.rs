@@ -13,8 +13,10 @@ pub use view::{CatalogMessageMutView, MessageMutView, MessageView, SingularPlura
 /// Represents a single message entry.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Message {
+    /// Translator comments of the message.
+    pub(crate) translator_comments: String,
     /// Developer comments of the message.
-    pub(crate) comments: String,
+    pub(crate) extracted_comments: String,
     /// Source code location of the message.
     pub(crate) source: String,
     /// Flags of the message.

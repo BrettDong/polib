@@ -12,6 +12,8 @@ use std::collections::btree_map::BTreeMap;
 /// `Catalog` struct represents a collection of _Messages_ stored in a `.po` or `.mo` file.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Catalog {
+    /// Pre-header section often containing translation contributors
+    pub preheader: Vec<String>,
     /// Metadata of the catalog.
     pub metadata: CatalogMetadata,
     pub(crate) messages: Vec<Option<Message>>,
@@ -21,6 +23,7 @@ pub struct Catalog {
 impl Catalog {
     pub(crate) fn empty() -> Self {
         Self {
+            preheader: vec![],
             metadata: CatalogMetadata::default(),
             messages: vec![],
             map: BTreeMap::new(),
