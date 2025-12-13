@@ -87,7 +87,8 @@ impl std::error::Error for POParseError {}
 #[derive(Clone, Copy)]
 enum POMessageField {
     None,
-    Comments,
+    TranslatorComments,
+    ExtractedComments,
     Source,
     Flags,
     Context,
@@ -99,7 +100,8 @@ enum POMessageField {
 
 #[derive(Default, Debug)]
 struct POMessage {
-    comments: String,
+    translator_comments: String,
+    extracted_comments: String,
     source: String,
     flags: String,
     msgctxt: String,
@@ -153,7 +155,8 @@ impl POParserState {
     fn get_field(&mut self) -> &mut String {
         let message = &mut self.current_message;
         match self.current_field {
-            POMessageField::Comments => &mut message.comments,
+            POMessageField::TranslatorComments => &mut message.translator_comments,
+            POMessageField::ExtractedComments => &mut message.extracted_comments,
             POMessageField::Source => &mut message.source,
             POMessageField::Flags => &mut message.flags,
             POMessageField::Context => &mut message.msgctxt,
@@ -186,6 +189,11 @@ impl POParserState {
         let mut po_message = std::mem::take(&mut self.current_message);
         if !self.metadata_parsed {
             if po_message.msgid.is_empty() && !po_message.msgstr.is_empty() {
+                if !po_message.translator_comments.is_empty() {
+                    for line in po_message.translator_comments.split("\n") {
+                        self.catalog.preheader.push(line.to_string());
+                    }
+                }
                 let unescaped = unescape(&po_message.msgstr)?;
                 self.catalog.metadata = CatalogMetadata::parse(&unescaped)?;
                 self.metadata_parsed = true;
@@ -201,7 +209,8 @@ impl POParserState {
                 }
                 self.catalog.append_or_update(
                     Message::build_plural()
-                        .with_comments(po_message.comments)
+                        .with_translator_comments(po_message.translator_comments)
+                        .with_extracted_comments(po_message.extracted_comments)
                         .with_source(po_message.source)
                         .with_flags(MessageFlags::from_str(&po_message.flags).unwrap())
                         .with_msgctxt(unescape(&po_message.msgctxt)?)
@@ -213,7 +222,8 @@ impl POParserState {
             } else {
                 self.catalog.append_or_update(
                     Message::build_singular()
-                        .with_comments(po_message.comments)
+                        .with_translator_comments(po_message.translator_comments)
+                        .with_extracted_comments(po_message.extracted_comments)
                         .with_source(po_message.source)
                         .with_flags(MessageFlags::from_str(&po_message.flags).unwrap())
                         .with_msgctxt(unescape(&po_message.msgctxt)?)
@@ -227,8 +237,9 @@ impl POParserState {
     }
 
     pub fn consume_line(&mut self, line: &str) -> Result<(), POParseError> {
-        static HEADER_FIELDS: [(&str, POMessageField); 3] = [
-            ("#. ", POMessageField::Comments),
+        static HEADER_FIELDS: [(&str, POMessageField); 4] = [
+            ("# ", POMessageField::TranslatorComments),
+            ("#. ", POMessageField::ExtractedComments),
             ("#: ", POMessageField::Source),
             ("#, ", POMessageField::Flags),
         ];
@@ -256,13 +267,19 @@ impl POParserState {
             }
         } else if line.starts_with('#') {
             if !self.options.message_body_only {
-                for (prefix, field) in &HEADER_FIELDS {
-                    if line.starts_with(*prefix) {
-                        self.current_field = *field;
-                        self.fill_field_with_newline(&line[prefix.len()..]);
-                        self.dirty = true;
-                        break;
+                if line.len() > 1 {
+                    for (prefix, field) in &HEADER_FIELDS {
+                        if line.starts_with(*prefix) {
+                            self.current_field = *field;
+                            self.fill_field_with_newline(&line[prefix.len()..]);
+                            self.dirty = true;
+                            break;
+                        }
                     }
+                } else {
+                    // Empty translator comment that should be kept to respect
+                    // the original file structure.
+                    self.fill_field_with_newline("");
                 }
             }
         } else if line.starts_with('m') {

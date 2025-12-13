@@ -12,6 +12,8 @@ use std::collections::btree_map::BTreeMap;
 /// `Catalog` struct represents a collection of _Messages_ stored in a `.po` or `.mo` file.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Catalog {
+    /// Pre-header section often containing translation contributors
+    pub preheader: Vec<String>,
     /// Metadata of the catalog.
     pub metadata: CatalogMetadata,
     pub(crate) messages: Vec<Option<Message>>,
@@ -21,6 +23,7 @@ pub struct Catalog {
 impl Catalog {
     pub(crate) fn empty() -> Self {
         Self {
+            preheader: vec![],
             metadata: CatalogMetadata::default(),
             messages: vec![],
             map: BTreeMap::new(),
@@ -46,12 +49,12 @@ impl Catalog {
     }
 
     /// Get an iterator over immutable messages in the catalog.
-    pub fn messages(&self) -> Iter {
+    pub fn messages(&self) -> Iter<'_> {
         Iter::begin(self)
     }
 
     /// Get an iterator over messages in the catalog that allows mutating a message in-place.
-    pub fn messages_mut(&mut self) -> IterMut {
+    pub fn messages_mut(&mut self) -> IterMut<'_> {
         IterMut::begin(self)
     }
 
@@ -78,7 +81,7 @@ impl Catalog {
         msgctxt: Option<&str>,
         msgid: &str,
         msgid_plural: Option<&str>,
-    ) -> Option<MessageMutProxy> {
+    ) -> Option<MessageMutProxy<'_>> {
         let key = MessageKey::gen(msgctxt, msgid, msgid_plural);
         if let Some(&index) = self.map.get(&key) {
             Some(MessageMutProxy::at(self, index))
