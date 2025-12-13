@@ -49,12 +49,12 @@ impl Catalog {
     }
 
     /// Get an iterator over immutable messages in the catalog.
-    pub fn messages(&self) -> Iter {
+    pub fn messages(&self) -> Iter<'_> {
         Iter::begin(self)
     }
 
     /// Get an iterator over messages in the catalog that allows mutating a message in-place.
-    pub fn messages_mut(&mut self) -> IterMut {
+    pub fn messages_mut(&mut self) -> IterMut<'_> {
         IterMut::begin(self)
     }
 
@@ -81,7 +81,7 @@ impl Catalog {
         msgctxt: Option<&str>,
         msgid: &str,
         msgid_plural: Option<&str>,
-    ) -> Option<MessageMutProxy> {
+    ) -> Option<MessageMutProxy<'_>> {
         let key = MessageKey::gen(msgctxt, msgid, msgid_plural);
         if let Some(&index) = self.map.get(&key) {
             Some(MessageMutProxy::at(self, index))

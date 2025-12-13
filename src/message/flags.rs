@@ -84,12 +84,12 @@ impl MessageFlags {
     }
 
     /// Get an immutable iterator over flags.
-    pub fn iter(&self) -> std::slice::Iter<String> {
+    pub fn iter(&self) -> std::slice::Iter<'_, String> {
         self.entries.iter()
     }
 
     /// Get a mutable iterator over flags.
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<String> {
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, String> {
         self.entries.iter_mut()
     }
 }
