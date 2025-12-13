@@ -1,4 +1,5 @@
 use polib::catalog::Catalog;
+use polib::message::MessageView;
 use polib::po_file;
 use std::path::Path;
 
